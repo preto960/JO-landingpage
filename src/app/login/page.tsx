@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Loader2, Shield, LogIn } from 'lucide-react'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
 
@@ -35,14 +34,17 @@ function LoginForm() {
       })
 
       if (result?.error) {
-        setError(result.error)
+        setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+      } else if (result?.ok) {
+        // Hard redirect to ensure session cookie is set before navigation
+        window.location.href = callbackUrl
       } else {
-        router.push(callbackUrl)
-        router.refresh()
+        // result might be undefined in some cases — treat as success
+        window.location.href = callbackUrl
       }
-    } catch (err) {
-      setError('Error al conectar con el servidor')
-    } finally {
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError(err?.message || 'Error al conectar con el servidor. Intenta de nuevo.')
       setLoading(false)
     }
   }
