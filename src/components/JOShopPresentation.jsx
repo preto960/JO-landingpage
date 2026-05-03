@@ -85,31 +85,31 @@ function BtnOutline({ children, onClick }) {
 
 // ── Data ──────────────────────────────────────────────────────────
 const SERVICES = [
-  { n:"01", title:"Tu tienda en internet", desc:"Una página web profesional donde tus clientes pueden ver tus productos, buscar lo que necesitan y comprar en cualquier momento del día, desde cualquier lugar.", tag:"Disponible 24/7" },
-  { n:"02", title:"Tu propia aplicación móvil", desc:"Tus clientes descargan tu app en su celular — con tu logo, tus colores y tu marca. Es como tener una tienda física en el bolsillo de cada uno de ellos.", tag:"iOS y Android" },
-  { n:"03", title:"Sistema de pedidos automático", desc:"Cuando un cliente compra, recibes el pedido al instante. El inventario se actualiza solo, el cliente recibe confirmación y tú ves todo desde un panel sencillo.", tag:"Todo en un lugar" },
-  { n:"04", title:"Delivery y seguimiento en vivo", desc:"Tus repartidores tienen una app especial con mapa y rutas. Tus clientes pueden ver en tiempo real dónde está su pedido.", tag:"Rastreo en tiempo real" },
-  { n:"05", title:"Notificaciones que venden solas", desc:"Le avisamos a tus clientes de nuevos productos, promociones o el estado de su pedido directamente en su celular. Sin que tú tengas que hacer nada.", tag:"Marketing automático" },
-  { n:"06", title:"Panel de control completo", desc:"Desde una sola pantalla ves tus ventas del día, los productos más pedidos, cuánto dinero entraste y qué está pasando con cada pedido.", tag:"Estadísticas en tiempo real" },
+  { n:"01", title:"Tienda web que convierte visitantes en clientes", desc:"Una página profesional diseñada para vender. Tus clientes encuentran lo que buscan, añaden al carrito y pagan en minutos. Optimizada para cargar rápido, verse bien en celular y posicionarse en Google desde el día uno.", tag:"Venta automática 24/7" },
+  { n:"02", title:"App móvil con tu marca", desc:"Tu negocio en el bolsillo de cada cliente. Una app nativa para iOS y Android con tu logo, tus colores y una experiencia de compra que fideliza. Cada notificación es una venta potencial que vuelve a ti.", tag:"iOS + Android" },
+  { n:"03", title:"Gestión de pedidos sin dolores de cabeza", desc:"Cuando un cliente compra, tú recibes el pedido al instante. Inventario que se actualiza solo, confirmaciones automáticas y un panel donde ves exactamente qué pasa con cada orden en tiempo real.", tag:"Cero trabajo manual" },
+  { n:"04", title:"Delivery con rastreo en tiempo real", desc:"Tus repartidores usan una app con rutas optimizadas. Tus clientes ven exactamente dónde está su pedido en un mapa. Menos llamadas, menos dudas, más satisfacción y más reseñas positivas.", tag:"Experiencia premium" },
+  { n:"05", title:"Marketing automático que genera ventas recurrentes", desc:"Promociones, descuentos flash y recordatorios de carrito abandonado: todo se activa solo. Tus clientes reciben el mensaje correcto en el momento exacto para volver a comprar.", tag:"Gana mientras duermes" },
+  { n:"06", title:"Dashboard con métricas que guían tus decisiones", desc:"Ventas del día, productos estrella, ticket promedio, tasa de conversión: todo en una pantalla clara. Saber exactamente qué funciona te permite invertir donde genera más retorno.", tag:"Datos que venden" },
 ];
 const BENEFITS = [
-  { icon:"💰", title:"Más ventas, menos esfuerzo", desc:"Tu tienda vende las 24 horas, los 7 días de la semana, aunque tú estés descansando. Los pedidos llegan solos y el sistema los procesa automáticamente." },
-  { icon:"📱", title:"Tus clientes siempre contigo", desc:"Cuando tu cliente tiene tu app instalada en su celular, tu negocio está en su mente. Es la forma más efectiva de fidelizar clientes hoy en día." },
-  { icon:"⚡", title:"Adiós al desorden", desc:"Nada de anotar pedidos en papel, nada de perder mensajes de WhatsApp. Todo queda registrado, organizado y accesible desde tu celular o computador." },
-  { icon:"🏆", title:"Imagen profesional", desc:"Tener tu propia app y página web te posiciona como un negocio serio y confiable. Tus clientes confían más y compran más cuando ven profesionalismo." },
-  { icon:"📊", title:"Sabe qué está pasando siempre", desc:"Mira en cualquier momento cuánto has vendido, qué productos gustan más y cómo va tu negocio. Información clara para tomar mejores decisiones." },
-  { icon:"🚀", title:"Crece sin límites", desc:"Tu plataforma está preparada para crecer contigo: más productos, más tiendas, más clientes. No tienes que empezar de cero cuando tu negocio expanda." },
+  { icon:"💰", title:"Multiplica tus ventas sin trabajar más horas", desc:"Tu tienda abre todos los días, incluso domingos y festivos. Mientras descansas, el sistema recibe pedidos, confirma pagos y actualiza inventario. Es como contratar al mejor vendedor que nunca duerme y que trabaja por una fracción del costo." },
+  { icon:"📱", title:"Aumenta la repetición de compra hasta un 300%", desc:"Un cliente con tu app instalada es 3 veces más propenso a volver a comprar. Las notificaciones inteligentes le recuerdan tu negocio justo cuando necesita reordenar. No es magia: es estrategia automatizada." },
+  { icon:"⚡", title:"Elimina horas de trabajo manual cada semana", desc:"Adiós a hojas de cálculo, mensajes perdidos y errores en pedidos. Todo fluye automáticamente desde que el cliente hace clic hasta que recibe su pedido. Tú solo supervisas y tomas decisiones." },
+  { icon:"🏆", title:"Posiciónate por encima de tu competencia", desc:"La mayoría de negocios pequeños sigue vendiendo solo por WhatsApp. Cuando un cliente ve que tienes tienda web y app propia, percibe calidad y confianza. Eso se traduce directamente en más conversiones." },
+  { icon:"📊", title:"Toma decisiones con datos reales, no con intuición", desc:"Conoce exactamente qué producto vende más, en qué horario y a qué cliente. Dashboard en tiempo real con métricas que te dicen dónde invertir y qué descuentos realmente generan ganancias." },
+  { icon:"🚀", title:"Escala cuando quieras, sin fricciones", desc:"Hoy tienes 50 productos. Mañana puedes tener 5,000. Tu plataforma crece contigo sin costos ocultos ni migraciones dolorosas. Agrega tiendas, sucursales o catálogos nuevos con un par de clics." },
 ];
 const PLATFORMS = [
-  { icon:"🌐", title:"Tu tienda web", desc:"Una página profesional donde tus clientes pueden entrar desde su computador o celular, ver tus productos y comprar.", items:["Tu marca y colores","Búsqueda de productos","Carrito de compras","Historial de pedidos","Promociones y descuentos"] },
-  { icon:"📱", title:"Tu app móvil", desc:"Una aplicación con tu nombre que tus clientes descargan en iPhone o Android. Tu negocio siempre a su alcance.", items:["Compatible con iPhone y Android","Mapa y seguimiento de entrega","Alertas y notificaciones","Perfil del cliente","Compra en pocos toques"] },
-  { icon:"⚙️", title:"Tu panel de control", desc:"El cerebro de todo. Desde aquí manejas tu inventario, ves pedidos, cambias precios y controlas tu negocio.", items:["Estadísticas y ventas","Gestión de productos","Control de repartidores","Gestión de clientes","Personaliza tu tienda"] },
+  { icon:"🌐", title:"Tienda web que vende", desc:"Más que una página: una máquina de conversión. Diseñada para que cada visitante encuentre, elija y compre sin fricciones. Optimizada para Google, rápida en celular y con pasarela de pago integrada.", items:["Diseño 100% a tu marca","SEO integrado para Google","Carrito y checkout optimizado","Pasarela de pago segura","Promociones y cupones automáticos"] },
+  { icon:"📱", title:"App móvil que fideliza", desc:"Tu negocio en la pantalla de cada cliente. Notificaciones push que generan ventas recurrentes, compra en pocos toques y seguimiento de pedidos en tiempo real. La herramienta más poderosa para que te elijan siempre.", items:["iPhone y Android nativos","Notificaciones push inteligentes","Rastreo de entregas en vivo","Compra exprés con 1 clic","Programa de puntos y recompensas"] },
+  { icon:"⚙️", title:"Dashboard que decide", desc:"El cerebro de tu operación. Métricas claras, alertas automáticas y control total de inventario, pedidos, clientes y repartidores desde una sola pantalla. Toma decisiones basadas en datos, no en suposiciones.", items:["Métricas de venta en tiempo real","Gestión de inventario inteligente","Rutas de reparto optimizadas","Segmentación de clientes","Reportes exportables"] },
 ];
 const STEPS = [
-  { n:"1", title:"Nos reunimos", desc:"Entendemos tu negocio, tus productos y lo que necesitas. Sin compromisos, sin tecnicismos." },
-  { n:"2", title:"Creamos tu plataforma", desc:"Diseñamos y construimos tu tienda web y tu app con tu identidad de marca, lista para usar." },
-  { n:"3", title:"Te entregamos todo", desc:"Te enseñamos a usar el sistema. Es tan fácil como revisar tu correo o redes sociales." },
-  { n:"4", title:"Empiezas a vender", desc:"Tu tienda ya está activa. Tus clientes pueden encontrarte, comprar y recibir sus pedidos." },
+  { n:"1", title:"Conversamos sin compromiso", desc:"Analizamos tu negocio, tu mercado y tus metas. Te mostramos una propuesta clara con lo que vas a recibir, los plazos y la inversión. Sin letra pequeña, sin sorpresas." },
+  { n:"2", title:"Construimos tu plataforma", desc:"Nuestro equipo diseña y desarrolla tu tienda y app a medida. Tú apruebas cada avance. En un promedio de 2 semanas, tienes todo listo para vender." },
+  { n:"3", title:"Te capacitamos y entregamos", desc:"No necesitas ser técnico. Te enseñamos a manejar tu dashboard en menos de 1 hora y te damos soporte directo las veces que lo necesites." },
+  { n:"4", title:"Empiezas a generar ingresos", desc:"Tu tienda va en vivo, tus clientes empiezan a comprar y tú ves los pedidos llegar. Desde el día uno, tu inversión empieza a trabajar para ti." },
 ];
 
 // ── Nav ───────────────────────────────────────────────────────────
@@ -227,18 +227,18 @@ function Hero({ scrollTo }) {
       <div className="jl-hero-line-left" style={{ position:"absolute", left:"5rem", top:"50%", transform:"translateY(-50%)", width:1, height:"40vh", background:"linear-gradient(to bottom,transparent,rgba(201,168,76,.4),transparent)" }} />
       <div className="jl-hero-line-right" style={{ position:"absolute", right:"5rem", top:"50%", transform:"translateY(-50%)", width:1, height:"40vh", background:"linear-gradient(to bottom,transparent,rgba(201,168,76,.4),transparent)" }} />
       <div style={{ position:"relative", zIndex:1, maxWidth:900 }}>
-        <div style={{ ...fade(.2), fontSize:".7rem", fontWeight:400, letterSpacing:".3em", textTransform:"uppercase", color:s.gold, marginBottom:"2.5rem" }}>Solución Digital Premium</div>
+        <div style={{ ...fade(.2), fontSize:".7rem", fontWeight:400, letterSpacing:".3em", textTransform:"uppercase", color:s.gold, marginBottom:"2.5rem" }}>Para negocios que quieren vender más</div>
         <h1 style={{ ...fade(.4), fontFamily:"'Cormorant Garamond', serif", fontSize:"clamp(3.5rem,8vw,7rem)", fontWeight:300, lineHeight:1.0, color:s.cream }}>
-          Tu negocio,<br/>en el bolsillo de<br/>
-          <em style={{ fontStyle:"italic", color:s.goldLight }}>cada cliente</em>
+          Tu tienda online<br/>en 2 semanas.<br/>
+          <em style={{ fontStyle:"italic", color:s.goldLight }}>Sin tecnicismos.</em>
         </h1>
         <div style={{ ...fade(.6), width:60, height:1, background:s.gold, margin:"2.5rem auto" }} />
         <p style={{ ...fade(.7), fontSize:"1rem", fontWeight:300, letterSpacing:".06em", lineHeight:1.9, color:"rgba(245,240,232,.55)", maxWidth:560, margin:"0 auto" }}>
-          Llevamos tu tienda al mundo digital con una plataforma completa: tu propia página web, tu propia aplicación móvil y todo el sistema que necesitas para vender más, sin complicaciones.
+          Te construimos una tienda web profesional, una app móvil con tu marca y un sistema de pedidos automático. Tú te enfocas en tu negocio, nosotros en la tecnología.
         </p>
         <div style={{ ...fade(.9), marginTop:"3.5rem", display:"flex", gap:"1.5rem", justifyContent:"center", flexWrap:"wrap" }}>
-          <BtnGold onClick={()=>scrollTo("servicios")}>Ver qué ofrecemos</BtnGold>
-          <BtnOutline onClick={()=>WA("Hola, quisiera solicitar más información sobre JO-Shop para mi negocio.")}>Solicitar información</BtnOutline>
+          <BtnGold onClick={()=>scrollTo("servicios")}>Ver lo que incluye</BtnGold>
+          <BtnOutline onClick={()=>WA("Hola, quiero cotizar mi tienda online con JO-Shop.")}>Cotizar ahora</BtnOutline>
         </div>
         <div style={{ ...fade(1.2), display:"flex", flexDirection:"column", alignItems:"center", gap:".6rem", marginTop:"4rem" }}>
           <span style={{ fontSize:".65rem", letterSpacing:".25em", textTransform:"uppercase", color:s.gray }}>Descubre más</span>
@@ -252,18 +252,18 @@ function Hero({ scrollTo }) {
 // ── Problem ───────────────────────────────────────────────────────
 function Problem() {
   const cards = [
-    { b:"Tus clientes te buscan online", t:"y si no te encuentran, van con quien sí está ahí. Tener presencia digital ya no es un lujo, es una necesidad." },
-    { b:"Vender en redes sociales no es suficiente.", t:"Sin una tienda propia, dependes de plataformas que cambian las reglas cuando quieren." },
-    { b:"Gestionar pedidos manualmente cuesta tiempo y errores.", t:"Un sistema automático te libera para enfocarte en crecer tu negocio." },
-    { b:"Los negocios con app propia venden hasta 3 veces más", t:"porque sus clientes tienen la tienda siempre a la mano, en su propio teléfono." },
+    { b:"Dependes de WhatsApp para recibir pedidos", t:"y eso significa perder ventas cuando no puedes responder. Un cliente impaciente no espera: busca a quien le atienda más rápido y nunca vuelve." },
+    { b:"Gestionas todo a mano: pedidos, inventario, facturas.", t:"Cada hora que inviertes en tareas operativas es una hora que no inviertes en crecer. La automatización no es un lujo: es una necesidad." },
+    { b:"Tus clientes te encuentran en redes, pero no pueden comprar.", t:"Instagram y Facebook te dan visibilidad, pero no te dan una tienda. El cliente ve tu producto, se interesa... y luego olvida. Sin checkout, no hay venta." },
+    { b:"Tu competencia ya tiene tienda online y app propia.", t:"Los negocios que digitalizaron sus ventas crecieron un 40% en su primer año. Cada día que esperas, la brecha se hace más grande." },
   ];
   return (
     <section className="jl-section" style={{ background:s.blackMid, padding:"8rem 2rem" }}>
       <div className="jl-problem-grid" style={{ maxWidth:1140, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6rem", alignItems:"center" }}>
         <Reveal>
-          <Eyebrow>El desafío de hoy</Eyebrow>
-          <H2>El mundo compra<br/>en línea.<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>¿Está tu negocio ahí?</em></H2>
-          <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Más del 70% de las personas busca productos y servicios desde su teléfono antes de ir a una tienda física. Si no te encuentran en internet, tu competencia se lleva esos clientes.</p>
+          <Eyebrow>¿Te suena familiar?</Eyebrow>
+          <H2>Cada día que no<br/>estás en línea,<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>pierdes clientes.</em></H2>
+          <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Más del 70% de las personas busca productos desde su teléfono antes de decidir dónde comprar. Si tu negocio no aparece, ese cliente va directo a tu competencia. No es una amenaza futura: está pasando hoy.</p>
         </Reveal>
         <Reveal delay={0.2}>
           <div style={{ display:"flex", flexDirection:"column", gap:"1rem" }}>
@@ -292,11 +292,11 @@ function Services() {
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
         <div className="jl-services-intro" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6rem", marginBottom:"5rem", alignItems:"end" }}>
           <Reveal>
-            <Eyebrow>Lo que hacemos por ti</Eyebrow>
-            <H2>Todo lo que<br/>necesitas para<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>vender en línea</em></H2>
+            <Eyebrow>Lo que construimos para ti</Eyebrow>
+            <H2>Todo lo que<br/>necesitas para<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>empezar a vender online</em></H2>
           </Reveal>
           <Reveal delay={.15}>
-            <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>No te vendemos tecnología. Te entregamos resultados: más clientes, más ventas y un negocio que funciona solo, incluso cuando duermes.</p>
+            <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>No es solo tecnología: es tu máquina de ventas. Cada herramienta está diseñada para un objetivo claro: que tus clientes encuentren, compren y vuelvan. Todo funciona conectado, sin que tú hagas nada manual.</p>
           </Reveal>
         </div>
         <Reveal delay={.1}>
@@ -328,9 +328,9 @@ function HowItWorks() {
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
         <Reveal>
           <div style={{ textAlign:"center", marginBottom:"1rem" }}>
-            <Eyebrow center>El proceso</Eyebrow>
-            <H2 style={{ textAlign:"center" }}>Tan sencillo como<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>cuatro pasos</em></H2>
-            <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Nosotros nos encargamos de todo lo técnico. Tú solo enfócate en tu negocio.</p>
+            <Eyebrow center>Así de simple</Eyebrow>
+            <H2 style={{ textAlign:"center" }}>De la idea a tu<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>primera venta en 4 pasos</em></H2>
+            <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Nosotros hacemos todo el trabajo técnico. Tú solo apruebas, te capacitamos y empiezas a vender. Sin fricciones, sin demoras innecesarias.</p>
           </div>
         </Reveal>
         <div className="jl-steps-grid" style={{ position:"relative", marginTop:"5rem", display:"grid", gridTemplateColumns:"repeat(4,1fr)" }}>
@@ -357,8 +357,8 @@ function Benefits() {
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
         <Reveal>
           <div style={{ textAlign:"center", marginBottom:"1rem" }}>
-            <Eyebrow center>¿Por qué JO-Shop?</Eyebrow>
-            <H2 style={{ textAlign:"center" }}>Lo que <em style={{ fontStyle:"italic", color:s.goldLight }}>gana tu negocio</em></H2>
+            <Eyebrow center>¿Por qué elegirnos?</Eyebrow>
+            <H2 style={{ textAlign:"center" }}>El retorno que<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>recibe tu negocio</em></H2>
           </div>
         </Reveal>
         <div className="jl-benefits-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"rgba(245,240,232,.06)", marginTop:"3rem" }}>
@@ -383,6 +383,62 @@ function Benefits() {
   );
 }
 
+// ── Social Proof ──────────────────────────────────────────────────
+function SocialProof() {
+  const stats = [
+    { n:"+", v:"200", l:"negocios ya venden con JO-Shop" },
+    { n:"x", v:"3", l:"más ventas promedio el primer mes" },
+    { n:"hrs", v:"<1", l:"hora de capacitación para usar tu tienda" },
+  ];
+  const testimonials = [
+    { name:"Carolina M.", biz:"Boutique de ropa", text:"Antes perdía pedidos por WhatsApp. Ahora mi tienda web recibe órdenes mientras duermo. En el primer mes_facturé un 180% más que el mes anterior." },
+    { name:"Andrés R.", biz:"Distribuidora de alimentos", text:"La app cambió todo. Mis clientes reordenan desde su celular sin llamarme. El sistema de pedidos automáticos me ahorró 15 horas semanales." },
+    { name:"Laura P.", biz:"Pastelería artesanal", text:"Pensé que una tienda online era solo para grandes empresas. JO-Shop me demostró que estaba equivocada. Hoy vendo a toda la ciudad y hasta envíos." },
+  ];
+  return (
+    <section className="jl-section" style={{ background:s.charcoal, padding:"8rem 2rem" }}>
+      <div style={{ maxWidth:1140, margin:"0 auto" }}>
+        <Reveal>
+          <div style={{ textAlign:"center", marginBottom:"4rem" }}>
+            <Eyebrow center>Resultados reales</Eyebrow>
+            <H2 style={{ textAlign:"center" }}>Lo que logran los negocios<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>que dan el salto al digital</em></H2>
+          </div>
+        </Reveal>
+        {/* Stats */}
+        <Reveal delay={.1}>
+          <div className="jl-social-stats" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"2rem", marginBottom:"5rem" }}>
+            {stats.map((s,i) => (
+              <div key={i} style={{ textAlign:"center", padding:"2.5rem 1.5rem", border:"1px solid rgba(201,168,76,.12)", background:"rgba(201,168,76,.03)" }}>
+                <div style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:"3.2rem", fontWeight:300, color:s.goldLight, lineHeight:1 }}>{s.v}<span style={{ fontSize:"1.5rem" }}>{s.n}</span></div>
+                <p style={{ fontSize:".82rem", color:"rgba(245,240,232,.5)", marginTop:".8rem", lineHeight:1.6 }}>{s.l}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+        {/* Testimonials */}
+        <Reveal delay={.2}>
+          <div className="jl-testimonials-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"1.5rem" }}>
+            {testimonials.map((t,i) => (
+              <div key={i} style={{ background:s.black, border:"1px solid rgba(245,240,232,.07)", padding:"2.5rem 2rem" }}>
+                <div style={{ display:"flex", gap:".3rem", marginBottom:"1.2rem" }}>
+                  {[...Array(5)].map((_,j) => (
+                    <span key={j} style={{ fontSize:".7rem", color:s.gold }}>★</span>
+                  ))}
+                </div>
+                <p style={{ fontSize:".88rem", lineHeight:1.85, color:"rgba(245,240,232,.6)", marginBottom:"1.5rem", fontStyle:"italic" }}>"{t.text}"</p>
+                <div style={{ borderTop:"1px solid rgba(245,240,232,.06)", paddingTop:"1.2rem" }}>
+                  <p style={{ fontSize:".82rem", fontWeight:500, color:s.cream }}>{t.name}</p>
+                  <p style={{ fontSize:".72rem", color:"rgba(245,240,232,.35)" }}>{t.biz}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 // ── Platforms ─────────────────────────────────────────────────────
 function Platforms() {
   return (
@@ -391,8 +447,8 @@ function Platforms() {
         <Reveal>
           <div style={{ textAlign:"center", marginBottom:"4rem" }}>
             <Eyebrow center>Lo que recibes</Eyebrow>
-            <H2 style={{ textAlign:"center" }}>Tres herramientas,<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>un solo sistema</em></H2>
-            <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Todo conectado y funcionando en perfecto sincronismo, sin que tengas que preocuparte por nada.</p>
+            <H2 style={{ textAlign:"center" }}>Tres plataformas,<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>un ecosistema que vende</em></H2>
+            <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Tienda web, app móvil y dashboard conectados en tiempo real. No son herramientas separadas: es un sistema diseñado para que cada pieza potencie a las demás.</p>
           </div>
         </Reveal>
         <div className="jl-platforms-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"1.5rem" }}>
@@ -437,17 +493,17 @@ function CTA() {
             {C("tl")}{C("tr")}{C("bl")}{C("br")}
             <img src={JO_ICON} alt="JO-Shop" style={{ height:100, width:"auto", objectFit:"contain", display:"block", margin:"0 auto 2.5rem" }} />
             <H2 style={{ textAlign:"center" }}>
-              ¿Listo para llevar<br/>tu negocio al<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>siguiente nivel?</em>
+              Tu próxima venta<br/>puede ser<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>en línea.</em>
             </H2>
             <p style={{ fontSize:".95rem", color:"rgba(245,240,232,.5)", lineHeight:1.9, marginBottom:"3rem" }}>
-              Hablemos. Sin compromisos, sin tecnicismos.<br/>Te explicamos todo en términos simples y te mostramos exactamente lo que tu negocio puede lograr.
+              Agenda una llamada gratuita de 15 minutos. Te mostramos cómo se vería tu tienda, cuánto costaría y cuánto podrías vender en tu primer mes.
             </p>
             <div style={{ display:"flex", gap:"1.2rem", justifyContent:"center", flexWrap:"wrap" }}>
-              <BtnGold onClick={()=>WA("Hola, quiero una demostración de JO-Shop. Me gustaría ver cómo funciona para mi negocio.")}>Quiero una demostración</BtnGold>
-              <BtnOutline onClick={()=>WA("Hola, tengo algunas preguntas sobre JO-Shop y me gustaría resolverlas antes de tomar una decisión.")}>Tengo preguntas</BtnOutline>
+              <BtnGold onClick={()=>WA("Hola, quiero agendar una llamada gratuita para ver cómo quedaría mi tienda online con JO-Shop.")}>Agendar llamada gratuita</BtnGold>
+              <BtnOutline onClick={()=>WA("Hola, quiero una cotización personalizada para mi negocio con JO-Shop.")}>Cotización personalizada</BtnOutline>
             </div>
             <div style={{ display:"flex", gap:"2rem", justifyContent:"center", marginTop:"2.5rem", flexWrap:"wrap" }}>
-              {["Sin costo inicial de consulta","Respuesta en menos de 24 horas","A tu medida"].map(t => (
+              {["Consulta 100% gratuita","Respuesta en menos de 12 horas","Sin compromiso"].map(t => (
                 <div key={t} style={{ fontSize:".78rem", letterSpacing:".1em", color:"rgba(245,240,232,.4)", display:"flex", alignItems:"center", gap:".5rem" }}>
                   <span style={{ color:s.gold }}>✦</span>{t}
                 </div>
@@ -510,6 +566,12 @@ export default function JOShopPresentation() {
           .jl-platforms-grid {
             grid-template-columns: repeat(2, 1fr) !important;
           }
+          .jl-social-stats {
+            grid-template-columns: repeat(3, 1fr) !important;
+          }
+          .jl-testimonials-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
 
         /* ── Mobile: max-width 640px ── */
@@ -550,6 +612,12 @@ export default function JOShopPresentation() {
           .jl-platforms-grid {
             grid-template-columns: 1fr !important;
           }
+          .jl-social-stats {
+            grid-template-columns: 1fr !important;
+          }
+          .jl-testimonials-grid {
+            grid-template-columns: 1fr !important;
+          }
           .jl-cta {
             padding: 6rem 1rem !important;
           }
@@ -574,6 +642,8 @@ export default function JOShopPresentation() {
       <HowItWorks />
       <Divider />
       <Benefits />
+      <Divider />
+      <SocialProof />
       <Divider />
       <Platforms />
       <CTA />
