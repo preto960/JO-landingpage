@@ -127,7 +127,7 @@ function Nav({ scrollTo }) {
       background: scrolled ? "rgba(10,10,10,.95)" : "rgba(10,10,10,.8)",
       backdropFilter:"blur(20px)",
       borderBottom:"1px solid rgba(201,168,76,.15)", transition:"background .3s" }}>
-      <img src={JO_ICON} alt="JO" style={{ height:40 }} />
+      <img src={JO_ICON} alt="JO-Shop" style={{ height:52, width:"auto", objectFit:"contain" }} />
       <ul style={{ display:"flex", gap:"2.5rem", listStyle:"none", margin:0, padding:0 }}>
         {[["Servicios","servicios"],["Cómo funciona","como"],["Beneficios","beneficios"],["Plataformas","plataformas"]].map(([label,id]) => (
           <li key={id}>
@@ -368,7 +368,7 @@ function CTA() {
         <Reveal>
           <div style={{ border:"1px solid rgba(201,168,76,.2)", padding:"6rem 5rem", position:"relative" }}>
             {C("tl")}{C("tr")}{C("bl")}{C("br")}
-            <img src={JO_ICON} alt="JO" style={{ height:64, marginBottom:"2.5rem" }} />
+            <img src={JO_ICON} alt="JO-Shop" style={{ height:80, width:"auto", objectFit:"contain", display:"block", margin:"0 auto 2.5rem" }} />
             <H2 style={{ textAlign:"center" }}>
               ¿Listo para llevar<br/>tu negocio al<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>siguiente nivel?</em>
             </H2>
