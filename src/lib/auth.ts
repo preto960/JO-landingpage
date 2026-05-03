@@ -1,18 +1,10 @@
-import type { NextAuthOptions } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
+import NextAuth from 'next-auth'
+import Credentials from 'next-auth/providers/credentials'
 import { db, verifyPassword } from '@/lib/db'
 
-// Build NEXTAUTH_URL dynamically to work behind reverse proxies (Caddy)
-const getNextAuthUrl = () => {
-  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL
-  // In production, trust the VERCEL_URL or fallback to constructing from headers
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
-  return undefined // Let next-auth use the request Host header
-}
-
-export const authOptions: NextAuthOptions = {
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    CredentialsProvider({
+    Credentials({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -25,7 +17,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const user = await db.user.findUnique({
-            where: { email: credentials.email },
+            where: { email: credentials.email as string },
           })
 
           if (!user) {
@@ -37,7 +29,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           const isValidPassword = await verifyPassword(
-            credentials.password,
+            credentials.password as string,
             user.password
           )
 
@@ -71,22 +63,22 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.id = user.id!
         token.role = (user as any).role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id
-        (session.user as any).role = token.role
+        session.user.id = token.id as string
+        session.user.role = token.role as string
       }
       return session
     },
   },
-  // Set NEXTAUTH_URL dynamically — critical for cookie domain behind reverse proxies
-  ...(getNextAuthUrl() ? { url: getNextAuthUrl() } : {}),
-  // Do NOT set pages.signIn — we handle redirects ourselves in the dashboard layout
-  // Setting it causes redirect loops when the session check fails
-  secret: process.env.NEXTAUTH_SECRET,
-}
+  pages: {
+    signIn: '/login',
+  },
+  trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+})

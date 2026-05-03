@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import {
   Card,
   CardContent,
@@ -60,8 +59,8 @@ const stats = [
 ]
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
-  const user = session?.user as any
+  const session = await auth()
+  const user = session?.user
 
   return (
     <div className="space-y-8">
