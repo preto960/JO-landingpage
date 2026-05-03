@@ -115,23 +115,24 @@ const STEPS = [
 // ── Nav ───────────────────────────────────────────────────────────
 function Nav({ scrollTo }) {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
   return (
-    <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:100,
+    <nav className="jl-nav" style={{ position:"fixed", top:0, left:0, right:0, zIndex:100,
       display:"flex", alignItems:"center", justifyContent:"space-between",
       padding:"1.2rem 4rem",
       background: scrolled ? "rgba(10,10,10,.95)" : "rgba(10,10,10,.8)",
       backdropFilter:"blur(20px)",
       borderBottom:"1px solid rgba(201,168,76,.15)", transition:"background .3s" }}>
-      <img src={JO_ICON} alt="JO-Shop" style={{ height:52, width:"auto", objectFit:"contain" }} />
-      <ul style={{ display:"flex", gap:"2.5rem", listStyle:"none", margin:0, padding:0 }}>
+      <img src={JO_ICON} alt="JO-Shop" style={{ height:60, width:"auto", objectFit:"contain" }} />
+      <ul className="jl-nav-links" style={{ display:"flex", gap:"2.5rem", listStyle:"none", margin:0, padding:0 }}>
         {[["Servicios","servicios"],["Cómo funciona","como"],["Beneficios","beneficios"],["Plataformas","plataformas"]].map(([label,id]) => (
           <li key={id}>
-            <button onClick={()=>scrollTo(id)}
+            <button onClick={()=>{ scrollTo(id); setMenuOpen(false); }}
               style={{ background:"none", border:"none", cursor:"pointer", fontSize:".78rem",
                 fontWeight:400, letterSpacing:".18em", color:"rgba(245,240,232,.5)",
                 textTransform:"uppercase", transition:"color .3s" }}
@@ -142,7 +143,41 @@ function Nav({ scrollTo }) {
           </li>
         ))}
       </ul>
-      <BtnOutline onClick={()=>WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio.")}>Contáctanos</BtnOutline>
+      <div className="jl-nav-cta">
+        <BtnOutline onClick={()=>WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio.")}>Contáctanos</BtnOutline>
+      </div>
+      <button className="jl-hamburger" onClick={()=>setMenuOpen(!menuOpen)} style={{ display:"none", background:"none", border:"none", cursor:"pointer", padding:"0.5rem" }}
+        aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,1)" strokeWidth="2" strokeLinecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+      {menuOpen && (
+        <div className="jl-mobile-overlay" style={{
+          position:"fixed", inset:0, zIndex:200, background:"rgba(10,10,10,.98)",
+          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"2rem",
+          opacity: menuOpen ? 1 : 0, transition:"opacity .3s ease"
+        }}>
+          <button onClick={()=>setMenuOpen(false)} style={{ position:"absolute", top:"1.5rem", right:"1.5rem", background:"none", border:"none", cursor:"pointer", padding:"0.5rem" }}
+            aria-label="Close menu">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,0.7)" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          {[["Servicios","servicios"],["Cómo funciona","como"],["Beneficios","beneficios"],["Plataformas","plataformas"]].map(([label,id]) => (
+            <button key={id} onClick={()=>{ scrollTo(id); setMenuOpen(false); }}
+              style={{ background:"none", border:"none", cursor:"pointer", fontSize:"1.1rem",
+                fontWeight:400, letterSpacing:".2em", color:"rgba(245,240,232,.6)",
+                textTransform:"uppercase" }}>
+              {label}
+            </button>
+          ))}
+          <BtnOutline onClick={()=>{ WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio."); setMenuOpen(false); }}>Contáctanos</BtnOutline>
+        </div>
+      )}
     </nav>
   );
 }
@@ -157,8 +192,8 @@ function Hero({ scrollTo }) {
       display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
       textAlign:"center", padding:"7rem 2rem 5rem",
       background:`radial-gradient(ellipse 80% 60% at 50% 20%,rgba(201,168,76,.1) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 20% 80%,rgba(201,168,76,.05) 0%,transparent 50%),${s.black}` }}>
-      <div style={{ position:"absolute", left:"5rem", top:"50%", transform:"translateY(-50%)", width:1, height:"40vh", background:"linear-gradient(to bottom,transparent,rgba(201,168,76,.4),transparent)" }} />
-      <div style={{ position:"absolute", right:"5rem", top:"50%", transform:"translateY(-50%)", width:1, height:"40vh", background:"linear-gradient(to bottom,transparent,rgba(201,168,76,.4),transparent)" }} />
+      <div className="jl-hero-line-left" style={{ position:"absolute", left:"5rem", top:"50%", transform:"translateY(-50%)", width:1, height:"40vh", background:"linear-gradient(to bottom,transparent,rgba(201,168,76,.4),transparent)" }} />
+      <div className="jl-hero-line-right" style={{ position:"absolute", right:"5rem", top:"50%", transform:"translateY(-50%)", width:1, height:"40vh", background:"linear-gradient(to bottom,transparent,rgba(201,168,76,.4),transparent)" }} />
       <div style={{ position:"relative", zIndex:1, maxWidth:900 }}>
         <div style={{ ...fade(.2), fontSize:".7rem", fontWeight:400, letterSpacing:".3em", textTransform:"uppercase", color:s.gold, marginBottom:"2.5rem" }}>Solución Digital Premium</div>
         <h1 style={{ ...fade(.4), fontFamily:"'Cormorant Garamond', serif", fontSize:"clamp(3.5rem,8vw,7rem)", fontWeight:300, lineHeight:1.0, color:s.cream }}>
@@ -191,8 +226,8 @@ function Problem() {
     { b:"Los negocios con app propia venden hasta 3 veces más", t:"porque sus clientes tienen la tienda siempre a la mano, en su propio teléfono." },
   ];
   return (
-    <section style={{ background:s.blackMid, padding:"8rem 2rem" }}>
-      <div style={{ maxWidth:1140, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6rem", alignItems:"center" }}>
+    <section className="jl-section" style={{ background:s.blackMid, padding:"8rem 2rem" }}>
+      <div className="jl-problem-grid" style={{ maxWidth:1140, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6rem", alignItems:"center" }}>
         <Reveal>
           <Eyebrow>El desafío de hoy</Eyebrow>
           <H2>El mundo compra<br/>en línea.<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>¿Está tu negocio ahí?</em></H2>
@@ -221,9 +256,9 @@ function Problem() {
 // ── Services ──────────────────────────────────────────────────────
 function Services() {
   return (
-    <section id="servicios" style={{ background:s.black, padding:"8rem 2rem" }}>
+    <section className="jl-section" id="servicios" style={{ background:s.black, padding:"8rem 2rem" }}>
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6rem", marginBottom:"5rem", alignItems:"end" }}>
+        <div className="jl-services-intro" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6rem", marginBottom:"5rem", alignItems:"end" }}>
           <Reveal>
             <Eyebrow>Lo que hacemos por ti</Eyebrow>
             <H2>Todo lo que<br/>necesitas para<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>vender en línea</em></H2>
@@ -233,7 +268,7 @@ function Services() {
           </Reveal>
         </div>
         <Reveal delay={.1}>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:1, background:"rgba(201,168,76,.1)" }}>
+          <div className="jl-services-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:1, background:"rgba(201,168,76,.1)" }}>
             {SERVICES.map((sv) => {
               const [h, setH] = useState(false);
               return (
@@ -257,7 +292,7 @@ function Services() {
 // ── HowItWorks ────────────────────────────────────────────────────
 function HowItWorks() {
   return (
-    <section id="como" style={{ background:s.charcoal, padding:"8rem 2rem" }}>
+    <section className="jl-section" id="como" style={{ background:s.charcoal, padding:"8rem 2rem" }}>
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
         <Reveal>
           <div style={{ textAlign:"center", marginBottom:"1rem" }}>
@@ -266,7 +301,7 @@ function HowItWorks() {
             <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Nosotros nos encargamos de todo lo técnico. Tú solo enfócate en tu negocio.</p>
           </div>
         </Reveal>
-        <div style={{ position:"relative", marginTop:"5rem", display:"grid", gridTemplateColumns:"repeat(4,1fr)" }}>
+        <div className="jl-steps-grid" style={{ position:"relative", marginTop:"5rem", display:"grid", gridTemplateColumns:"repeat(4,1fr)" }}>
           <div style={{ position:"absolute", top:"2rem", left:"10%", right:"10%", height:1, background:"linear-gradient(to right,transparent,rgba(201,168,76,.3),transparent)" }} />
           {STEPS.map((st, i) => (
             <Reveal key={st.n} delay={i*.1}>
@@ -286,7 +321,7 @@ function HowItWorks() {
 // ── Benefits ──────────────────────────────────────────────────────
 function Benefits() {
   return (
-    <section id="beneficios" style={{ background:s.black, padding:"8rem 2rem" }}>
+    <section className="jl-section" id="beneficios" style={{ background:s.black, padding:"8rem 2rem" }}>
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
         <Reveal>
           <div style={{ textAlign:"center", marginBottom:"1rem" }}>
@@ -294,7 +329,7 @@ function Benefits() {
             <H2 style={{ textAlign:"center" }}>Lo que <em style={{ fontStyle:"italic", color:s.goldLight }}>gana tu negocio</em></H2>
           </div>
         </Reveal>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"rgba(245,240,232,.06)", marginTop:"3rem" }}>
+        <div className="jl-benefits-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"rgba(245,240,232,.06)", marginTop:"3rem" }}>
           {BENEFITS.map((b, i) => {
             const [h, setH] = useState(false);
             return (
@@ -319,7 +354,7 @@ function Benefits() {
 // ── Platforms ─────────────────────────────────────────────────────
 function Platforms() {
   return (
-    <section id="plataformas" style={{ background:s.blackMid, padding:"8rem 2rem" }}>
+    <section className="jl-section" id="plataformas" style={{ background:s.blackMid, padding:"8rem 2rem" }}>
       <div style={{ maxWidth:1140, margin:"0 auto" }}>
         <Reveal>
           <div style={{ textAlign:"center", marginBottom:"4rem" }}>
@@ -328,7 +363,7 @@ function Platforms() {
             <p style={{ fontSize:".95rem", fontWeight:300, lineHeight:1.9, color:"rgba(245,240,232,.5)" }}>Todo conectado y funcionando en perfecto sincronismo, sin que tengas que preocuparte por nada.</p>
           </div>
         </Reveal>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"1.5rem" }}>
+        <div className="jl-platforms-grid" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"1.5rem" }}>
           {PLATFORMS.map((p,i) => {
             const [h, setH] = useState(false);
             return (
@@ -363,12 +398,12 @@ function CTA() {
     return <div style={{ position:"absolute", width:20, height:20, ...m[pos] }} />;
   };
   return (
-    <section style={{ background:s.black, padding:"10rem 2rem", textAlign:"center" }}>
+    <section className="jl-cta" style={{ background:s.black, padding:"10rem 2rem", textAlign:"center" }}>
       <div style={{ maxWidth:760, margin:"0 auto" }}>
         <Reveal>
-          <div style={{ border:"1px solid rgba(201,168,76,.2)", padding:"6rem 5rem", position:"relative" }}>
+          <div className="jl-cta-box" style={{ border:"1px solid rgba(201,168,76,.2)", padding:"6rem 5rem", position:"relative" }}>
             {C("tl")}{C("tr")}{C("bl")}{C("br")}
-            <img src={JO_ICON} alt="JO-Shop" style={{ height:80, width:"auto", objectFit:"contain", display:"block", margin:"0 auto 2.5rem" }} />
+            <img src={JO_ICON} alt="JO-Shop" style={{ height:100, width:"auto", objectFit:"contain", display:"block", margin:"0 auto 2.5rem" }} />
             <H2 style={{ textAlign:"center" }}>
               ¿Listo para llevar<br/>tu negocio al<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>siguiente nivel?</em>
             </H2>
@@ -396,7 +431,7 @@ function CTA() {
 // ── Footer ────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer style={{ background:s.blackMid, borderTop:"1px solid rgba(201,168,76,.1)", padding:"3rem 4rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"1.5rem" }}>
+    <footer className="jl-footer" style={{ background:s.blackMid, borderTop:"1px solid rgba(201,168,76,.1)", padding:"3rem 4rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"1.5rem" }}>
       <img src={JO_ICON} alt="JO" style={{ height:36 }} />
       <p style={{ fontSize:".72rem", letterSpacing:".12em", color:s.gray }}>Tu negocio digital, en todos los dispositivos</p>
       <p style={{ fontSize:".72rem", letterSpacing:".12em", color:s.gray }}>© 2025 JO-Shop</p>
@@ -414,6 +449,84 @@ export default function JOShopPresentation() {
         *{box-sizing:border-box;margin:0;padding:0}
         html{scroll-behavior:smooth}
         body{background:#0A0A0A;color:#F5F0E8;overflow-x:hidden}
+
+        /* ── Hamburger ── */
+        .jl-hamburger { display: none !important; }
+
+        /* ── Mobile overlay ── */
+        .jl-mobile-overlay { display: none !important; }
+
+        /* ── Tablet: max-width 1024px ── */
+        @media (max-width: 1024px) {
+          .jl-problem-grid {
+            grid-template-columns: 1fr !important;
+            gap: 3rem !important;
+          }
+          .jl-services-intro {
+            grid-template-columns: 1fr !important;
+            gap: 3rem !important;
+            align-items: center !important;
+          }
+          .jl-services-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .jl-steps-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 3rem !important;
+          }
+          .jl-platforms-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+
+        /* ── Mobile: max-width 640px ── */
+        @media (max-width: 640px) {
+          .jl-nav {
+            padding: 1rem 1.5rem !important;
+          }
+          .jl-nav-links,
+          .jl-nav-cta {
+            display: none !important;
+          }
+          .jl-hamburger {
+            display: flex !important;
+          }
+          .jl-mobile-overlay {
+            display: flex !important;
+          }
+          .jl-hero-line-left,
+          .jl-hero-line-right {
+            display: none !important;
+          }
+          .jl-section {
+            padding: 5rem 1.5rem !important;
+          }
+          .jl-services-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .jl-steps-grid {
+            grid-template-columns: 1fr !important;
+            text-align: center !important;
+          }
+          .jl-benefits-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .jl-platforms-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .jl-cta {
+            padding: 6rem 1rem !important;
+          }
+          .jl-cta-box {
+            padding: 3rem 1.5rem !important;
+          }
+          .jl-footer {
+            padding: 2rem 1.5rem !important;
+            flex-direction: column !important;
+            text-align: center !important;
+            align-items: center !important;
+          }
+        }
       `}</style>
       <Nav scrollTo={scrollTo} />
       <Hero scrollTo={scrollTo} />
