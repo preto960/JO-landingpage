@@ -134,12 +134,12 @@ function LoginForm() {
                   'Ingresar al Panel'
                 )}
               </Button>
-              <p className="text-center text-sm text-gray-400">
+              {/* <p className="text-center text-sm text-gray-400">
                 ¿No tienes cuenta?{' '}
                 <Link href="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
                   Crear cuenta
                 </Link>
-              </p>
+              </p> */}
             </CardFooter>
           </form>
         </Card>
