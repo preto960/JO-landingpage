@@ -121,6 +121,15 @@ function Nav({ scrollTo }) {
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
   return (
     <nav className="jl-nav" style={{ position:"fixed", top:0, left:0, right:0, zIndex:100,
       display:"flex", alignItems:"center", justifyContent:"space-between",
@@ -146,38 +155,59 @@ function Nav({ scrollTo }) {
       <div className="jl-nav-cta">
         <BtnOutline onClick={()=>WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio.")}>Contáctanos</BtnOutline>
       </div>
-      <button className="jl-hamburger" onClick={()=>setMenuOpen(!menuOpen)} style={{ display:"none", background:"none", border:"none", cursor:"pointer", padding:"0.5rem" }}
+      <button className="jl-hamburger" onClick={()=>setMenuOpen(true)} style={{ display:"none", background:"none", border:"none", cursor:"pointer", padding:"0.5rem" }}
         aria-label="Toggle menu">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,1)" strokeWidth="2" strokeLinecap="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
+          <line x1="4" y1="6" x2="20" y2="6" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <line x1="4" y1="18" x2="20" y2="18" />
         </svg>
       </button>
-      {menuOpen && (
-        <div className="jl-mobile-overlay" style={{
-          position:"fixed", inset:0, zIndex:200, background:"rgba(10,10,10,.98)",
-          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"2rem",
-          opacity: menuOpen ? 1 : 0, transition:"opacity .3s ease"
-        }}>
-          <button onClick={()=>setMenuOpen(false)} style={{ position:"absolute", top:"1.5rem", right:"1.5rem", background:"none", border:"none", cursor:"pointer", padding:"0.5rem" }}
+      {/* ── Mobile Drawer ── */}
+      <div className="jl-mobile-drawer" style={{
+        position:"fixed", top:0, right: menuOpen ? 0 : "100%", bottom:0, width:"85%", maxWidth:360,
+        zIndex:200, background:"#0A0A0A",
+        borderLeft:"1px solid rgba(201,168,76,.15)",
+        boxShadow: menuOpen ? "-10px 0 40px rgba(0,0,0,.6)" : "none",
+        transition:"right .35s cubic-bezier(.4,0,.2,1), box-shadow .35s ease",
+        display:"flex", flexDirection:"column", padding:0, overflowY:"auto"
+      }}>
+        {/* Drawer Header */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"1.5rem 1.75rem", borderBottom:"1px solid rgba(201,168,76,.1)" }}>
+          <img src={JO_ICON} alt="JO-Shop" style={{ height:40, width:"auto", objectFit:"contain" }} />
+          <button onClick={()=>setMenuOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", padding:"0.4rem", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" }}
             aria-label="Close menu">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,0.7)" strokeWidth="2" strokeLinecap="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,.5)" strokeWidth="2" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
+        </div>
+        {/* Drawer Nav Links */}
+        <nav style={{ flex:1, display:"flex", flexDirection:"column", padding:"1.5rem 0" }}>
           {[["Servicios","servicios"],["Cómo funciona","como"],["Beneficios","beneficios"],["Plataformas","plataformas"]].map(([label,id]) => (
             <button key={id} onClick={()=>{ scrollTo(id); setMenuOpen(false); }}
-              style={{ background:"none", border:"none", cursor:"pointer", fontSize:"1.1rem",
-                fontWeight:400, letterSpacing:".2em", color:"rgba(245,240,232,.6)",
-                textTransform:"uppercase" }}>
+              style={{ background:"none", border:"none", cursor:"pointer", fontSize:".95rem",
+                fontWeight:400, letterSpacing:".12em", color:"rgba(245,240,232,.55)",
+                textTransform:"uppercase", textAlign:"left", padding:"1rem 1.75rem",
+                transition:"color .2s, background .2s", fontFamily:"'Jost', sans-serif" }}
+              onMouseEnter={e=>{e.target.style.color=s.gold; e.target.style.background="rgba(201,168,76,.06)"}}
+              onMouseLeave={e=>{e.target.style.color="rgba(245,240,232,.55)"; e.target.style.background="none"}}>
               {label}
             </button>
           ))}
+        </nav>
+        {/* Drawer Footer CTA */}
+        <div style={{ padding:"1.5rem 1.75rem 2rem", borderTop:"1px solid rgba(201,168,76,.1)" }}>
           <BtnOutline onClick={()=>{ WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio."); setMenuOpen(false); }}>Contáctanos</BtnOutline>
+          <p style={{ fontSize:".68rem", letterSpacing:".08em", color:"rgba(245,240,232,.3)", marginTop:"1rem", textAlign:"center" }}>Tu negocio digital, en todos los dispositivos</p>
         </div>
-      )}
+      </div>
+      {/* ── Drawer Backdrop ── */}
+      {menuOpen && <div className="jl-drawer-backdrop" onClick={()=>setMenuOpen(false)} style={{
+        position:"fixed", inset:0, zIndex:199, background:"rgba(0,0,0,.6)",
+        backdropFilter:"blur(4px)", WebkitBackdropFilter:"blur(4px)"
+      }} />}
     </nav>
   );
 }
@@ -453,8 +483,9 @@ export default function JOShopPresentation() {
         /* ── Hamburger ── */
         .jl-hamburger { display: none !important; }
 
-        /* ── Mobile overlay ── */
-        .jl-mobile-overlay { display: none !important; }
+        /* ── Mobile drawer (hidden by default) ── */
+        .jl-mobile-drawer { display: none !important; }
+        .jl-drawer-backdrop { display: none !important; }
 
         /* ── Tablet: max-width 1024px ── */
         @media (max-width: 1024px) {
@@ -491,8 +522,11 @@ export default function JOShopPresentation() {
           .jl-hamburger {
             display: flex !important;
           }
-          .jl-mobile-overlay {
+          .jl-mobile-drawer {
             display: flex !important;
+          }
+          .jl-drawer-backdrop {
+            display: block !important;
           }
           .jl-hero-line-left,
           .jl-hero-line-right {
