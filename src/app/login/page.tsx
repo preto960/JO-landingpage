@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Loader2, Shield, LogIn } from 'lucide-react'
 
@@ -29,7 +28,6 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      // Use signIn with redirect: false first to check credentials
       const result = await signIn('credentials', {
         email,
         password,
@@ -44,14 +42,10 @@ function LoginForm() {
       }
 
       if (result?.ok) {
-        // Successful login — do a hard navigation to dashboard
-        // Using router.replace alone may not work with server components
-        // window.location ensures cookies are sent on the next request
         window.location.href = callbackUrl
         return
       }
 
-      // Fallback: try with redirect: true (full page POST, most reliable)
       signIn('credentials', {
         email,
         password,
@@ -65,102 +59,245 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
-      </div>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: '#0A0A0A' }}
+    >
+      {/* Decorative background glows - matching landing page hero */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,.1) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 20% 80%, rgba(201,168,76,.05) 0%, transparent 50%)',
+        }}
+      />
+
+      {/* Vertical decorative lines - left */}
+      <div
+        className="hidden sm:block absolute left-12 top-0 bottom-0 w-px opacity-0 lg:opacity-100"
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(201,168,76,.3), transparent)' }}
+      />
+
+      {/* Vertical decorative lines - right */}
+      <div
+        className="hidden sm:block absolute right-12 top-0 bottom-0 w-px opacity-0 lg:opacity-100"
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(201,168,76,.3), transparent)' }}
+      />
 
       <div className="relative w-full max-w-md">
-        <div className="text-center mb-8">
+        {/* Logo */}
+        <div className="text-center mb-10">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-white tracking-tight">
-              JO<span className="text-blue-400">-Shop</span>
+            <h1
+              className="text-4xl font-light tracking-wide"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                color: '#F5F0E8',
+              }}
+            >
+              <span style={{ color: '#C9A84C' }}>JO</span>
             </h1>
           </Link>
-          <p className="text-gray-400 mt-2 text-sm">Panel de administración</p>
+          <p
+            className="mt-3 text-xs uppercase tracking-[.18em]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              color: 'rgba(245,240,232,.45)',
+            }}
+          >
+            Panel de administración
+          </p>
         </div>
 
-        <Card className="bg-gray-900/80 border-gray-800 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
-              <LogIn className="w-6 h-6 text-blue-400" />
-            </div>
-            <CardTitle className="text-xl text-white">Iniciar Sesión</CardTitle>
-            <CardDescription className="text-gray-400">
-              Ingresa tus credenciales para acceder al panel
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {registered && (
-                <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
-                  <AlertDescription>
-                    Cuenta creada exitosamente. Ya puedes iniciar sesión.
-                  </AlertDescription>
-                </Alert>
-              )}
-              {error && (
-                <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300 text-sm">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20"
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-300 text-sm">Contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20 pr-10"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Ingresando...
-                  </>
-                ) : (
-                  'Ingresar al Panel'
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
+        {/* Gold divider */}
+        <div
+          className="w-16 h-px mx-auto mb-8"
+          style={{ background: 'linear-gradient(to right, transparent, rgba(201,168,76,.5), transparent)' }}
+        />
 
-        <p className="text-center text-xs text-gray-600 mt-6 flex items-center justify-center gap-1.5">
+        {/* Login Card */}
+        <div
+          className="border p-8 sm:p-10"
+          style={{
+            background: 'rgba(28,28,28,.4)',
+            borderColor: 'rgba(245,240,232,.07)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div className="text-center mb-8">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ border: '1px solid rgba(201,168,76,.2)', background: 'rgba(201,168,76,.05)' }}
+            >
+              <LogIn className="w-5 h-5" style={{ color: '#C9A84C' }} />
+            </div>
+            <h2
+              className="text-2xl font-light mb-2"
+              style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+            >
+              Iniciar Sesión
+            </h2>
+            <p
+              className="text-sm"
+              style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.45)' }}
+            >
+              Ingresa tus credenciales para acceder al panel
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {registered && (
+              <div
+                className="border p-3 text-sm text-center"
+                style={{
+                  background: 'rgba(34,197,94,.05)',
+                  borderColor: 'rgba(34,197,94,.2)',
+                  color: '#4ade80',
+                }}
+              >
+                Cuenta creada exitosamente. Ya puedes iniciar sesión.
+              </div>
+            )}
+
+            {error && (
+              <div
+                className="border p-3 text-sm text-center"
+                style={{
+                  background: 'rgba(239,68,68,.05)',
+                  borderColor: 'rgba(239,68,68,.2)',
+                  color: '#f87171',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-xs uppercase tracking-[.12em]"
+                style={{
+                  fontFamily: "'Jost', sans-serif",
+                  color: 'rgba(245,240,232,.55)',
+                }}
+              >
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="h-11 text-sm font-light transition-colors duration-300"
+                style={{
+                  fontFamily: "'Jost', sans-serif",
+                  background: 'rgba(10,10,10,.6)',
+                  border: '1px solid rgba(245,240,232,.07)',
+                  color: '#F5F0E8',
+                  caretColor: '#C9A84C',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'rgba(201,168,76,.4)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(245,240,232,.07)'
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="text-xs uppercase tracking-[.12em]"
+                style={{
+                  fontFamily: "'Jost', sans-serif",
+                  color: 'rgba(245,240,232,.55)',
+                }}
+              >
+                Contraseña
+              </label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="h-11 text-sm font-light pr-10 transition-colors duration-300"
+                  style={{
+                    fontFamily: "'Jost', sans-serif",
+                    background: 'rgba(10,10,10,.6)',
+                    border: '1px solid rgba(245,240,232,.07)',
+                    color: '#F5F0E8',
+                    caretColor: '#C9A84C',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'rgba(201,168,76,.4)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(245,240,232,.07)'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                  style={{ color: 'rgba(245,240,232,.3)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.6)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.3)')}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 mt-2 text-xs uppercase tracking-[.18em] font-medium transition-all duration-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                background: loading ? 'rgba(201,168,76,.7)' : '#C9A84C',
+                color: '#0A0A0A',
+                border: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.background = '#E8C97A'
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) e.currentTarget.style.background = '#C9A84C'
+              }}
+              onMouseDown={(e) => {
+                if (!loading) e.currentTarget.style.transform = 'scale(0.98)'
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Ingresando...
+                </span>
+              ) : (
+                'Ingresar al Panel'
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Footer security text */}
+        <p
+          className="text-center text-xs mt-8 flex items-center justify-center gap-1.5"
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            color: 'rgba(245,240,232,.25)',
+          }}
+        >
           <Shield className="w-3 h-3" />
           Conexión segura y encriptada
         </p>
@@ -171,11 +308,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0A' }}>
+          <div className="w-6 h-6 border rounded-full animate-spin" style={{ borderColor: 'rgba(201,168,76,.2)', borderTopColor: '#C9A84C' }} />
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   )

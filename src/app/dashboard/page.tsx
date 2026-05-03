@@ -1,13 +1,5 @@
 import { auth } from '@/lib/auth'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import {
   Users,
   ShoppingCart,
   DollarSign,
@@ -26,8 +18,7 @@ const stats = [
     change: '0%',
     trend: 'up' as const,
     icon: DollarSign,
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/10',
+    accent: '#22c55e',
   },
   {
     title: 'Pedidos',
@@ -35,8 +26,7 @@ const stats = [
     change: '0%',
     trend: 'neutral' as const,
     icon: ShoppingCart,
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10',
+    accent: '#C9A84C',
   },
   {
     title: 'Clientes',
@@ -44,8 +34,7 @@ const stats = [
     change: '0%',
     trend: 'up' as const,
     icon: Users,
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/10',
+    accent: '#a78bfa',
   },
   {
     title: 'Visitas',
@@ -53,8 +42,7 @@ const stats = [
     change: '0%',
     trend: 'neutral' as const,
     icon: Eye,
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/10',
+    accent: '#fb923c',
   },
 ]
 
@@ -64,137 +52,305 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Welcome header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">
-          Bienvenido, {user?.name?.split(' ')[0] || 'Admin'} 👋
+        <h1
+          className="text-3xl lg:text-4xl font-light"
+          style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+        >
+          Bienvenido, <span style={{ color: '#C9A84C' }}>{user?.name?.split(' ')[0] || 'Admin'}</span>
         </h1>
-        <p className="text-gray-400 mt-1">
-          Aquí tienes un resumen general de tu tienda JO-Shop.
+        <p
+          className="mt-2 text-sm"
+          style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.4)' }}
+        >
+          Aquí tienes un resumen general de tu panel de administración.
         </p>
       </div>
 
+      {/* Gold divider */}
+      <div
+        className="w-full h-px"
+        style={{ background: 'linear-gradient(to right, rgba(201,168,76,.3), transparent)' }}
+      />
+
+      {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.title} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                    <Icon className={`w-5 h-5 ${stat.color}`} />
-                  </div>
-                  <div className={`flex items-center text-xs font-medium ${
-                    stat.trend === 'up' ? 'text-green-400' : 'text-gray-500'
-                  }`}>
-                    {stat.trend === 'up' && <ArrowUpRight className="w-3 h-3 mr-0.5" />}
-                    {stat.change}
-                  </div>
+            <div
+              key={stat.title}
+              className="p-5 transition-all duration-300"
+              style={{
+                background: 'rgba(28,28,28,.3)',
+                border: '1px solid rgba(245,240,232,.06)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(201,168,76,.15)'
+                e.currentTarget.style.background = 'rgba(28,28,28,.5)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(245,240,232,.06)'
+                e.currentTarget.style.background = 'rgba(28,28,28,.3)'
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div
+                  className="w-10 h-10 flex items-center justify-center"
+                  style={{
+                    border: '1px solid rgba(245,240,232,.06)',
+                    background: 'rgba(245,240,232,.03)',
+                  }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: stat.accent, strokeWidth: 1.5 }} />
                 </div>
-                <div className="mt-3">
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{stat.title}</p>
+                <div
+                  className="flex items-center text-xs font-medium"
+                  style={{
+                    fontFamily: "'Jost', sans-serif",
+                    color: stat.trend === 'up' ? 'rgba(34,197,94,.7)' : 'rgba(245,240,232,.2)',
+                  }}
+                >
+                  {stat.trend === 'up' && <ArrowUpRight className="w-3 h-3 mr-0.5" />}
+                  {stat.change}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p
+                className="text-2xl font-light"
+                style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+              >
+                {stat.value}
+              </p>
+              <p
+                className="text-xs mt-1 uppercase tracking-[.1em]"
+                style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)' }}
+              >
+                {stat.title}
+              </p>
+            </div>
           )
         })}
       </div>
 
+      {/* Activity + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-white text-lg">Actividad Reciente</CardTitle>
-            <CardDescription className="text-gray-500">
-              Últimos eventos en tu tienda
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {[
-                {
-                  icon: Package,
-                  title: 'Configuración inicial completada',
-                  description: 'Tu panel de administración está listo. Comienza agregando tus primeros productos.',
-                  time: 'Ahora',
-                  color: 'text-blue-400',
-                  bgColor: 'bg-blue-500/10',
-                },
-                {
-                  icon: Star,
-                  title: 'Bienvenido a JO-Shop',
-                  description: 'Explora las funcionalidades del dashboard y configura tu tienda online.',
-                  time: 'Inicio',
-                  color: 'text-yellow-400',
-                  bgColor: 'bg-yellow-500/10',
-                },
-              ].map((activity, index) => {
-                const Icon = activity.icon
-                return (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-lg ${activity.bgColor} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-5 h-5 ${activity.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-200">{activity.title}</p>
-                      <p className="text-sm text-gray-500 mt-0.5">{activity.description}</p>
-                    </div>
-                    <span className="text-xs text-gray-600 flex-shrink-0">{activity.time}</span>
+        {/* Activity */}
+        <div
+          className="lg:col-span-2 p-6"
+          style={{
+            background: 'rgba(28,28,28,.3)',
+            border: '1px solid rgba(245,240,232,.06)',
+          }}
+        >
+          <h2
+            className="text-lg font-light mb-1"
+            style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+          >
+            Actividad Reciente
+          </h2>
+          <p
+            className="text-xs mb-6 uppercase tracking-[.1em]"
+            style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}
+          >
+            Últimos eventos en tu panel
+          </p>
+
+          <div className="space-y-6">
+            {[
+              {
+                icon: Package,
+                title: 'Configuración inicial completada',
+                description: 'Tu panel de administración está listo. Comienza configurando tu contenido.',
+                time: 'Ahora',
+                accent: '#C9A84C',
+              },
+              {
+                icon: Star,
+                title: 'Bienvenido al panel',
+                description: 'Explora las funcionalidades del dashboard y personaliza tu landing page.',
+                time: 'Inicio',
+                accent: '#E8C97A',
+              },
+            ].map((activity, index) => {
+              const Icon = activity.icon
+              return (
+                <div key={index} className="flex items-start gap-4">
+                  <div
+                    className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      border: '1px solid rgba(201,168,76,.1)',
+                      background: 'rgba(201,168,76,.05)',
+                    }}
+                  >
+                    <Icon className="w-4 h-4" style={{ color: activity.accent, strokeWidth: 1.5 }} />
                   </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-8 p-6 rounded-lg bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-blue-500/10">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-white font-medium">¿Empezamos a vender?</h3>
-                  <p className="text-gray-500 text-sm mt-1">
-                    Agrega tus primeros productos y configura los métodos de pago.
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-sm"
+                      style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)' }}
+                    >
+                      {activity.title}
+                    </p>
+                    <p
+                      className="text-xs mt-1"
+                      style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', lineHeight: '1.6' }}
+                    >
+                      {activity.description}
+                    </p>
+                  </div>
+                  <span
+                    className="text-[10px] uppercase tracking-[.08em] flex-shrink-0 mt-0.5"
+                    style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}
+                  >
+                    {activity.time}
+                  </span>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
-                  Agregar Producto
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              )
+            })}
+          </div>
 
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-white text-lg">Acciones Rápidas</CardTitle>
-            <CardDescription className="text-gray-500">
-              Configuración inicial
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          {/* CTA Card */}
+          <div
+            className="mt-8 p-6"
+            style={{
+              background: 'rgba(201,168,76,.03)',
+              border: '1px solid rgba(201,168,76,.1)',
+            }}
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3
+                  className="text-base font-normal"
+                  style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+                >
+                  ¿Empezamos a configurar?
+                </h3>
+                <p
+                  className="text-xs mt-1"
+                  style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.35)', lineHeight: '1.6' }}
+                >
+                  Agrega tu primer contenido y personaliza tu landing page.
+                </p>
+              </div>
+              <Link href="/dashboard/settings">
+                <button
+                  className="text-xs uppercase tracking-[.18em] font-medium px-6 py-3 transition-all duration-300 cursor-pointer whitespace-nowrap"
+                  style={{
+                    fontFamily: "'Jost', sans-serif",
+                    background: '#C9A84C',
+                    color: '#0A0A0A',
+                    border: 'none',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#E8C97A')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#C9A84C')}
+                >
+                  Comenzar
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div
+          className="p-6"
+          style={{
+            background: 'rgba(28,28,28,.3)',
+            border: '1px solid rgba(245,240,232,.06)',
+          }}
+        >
+          <h2
+            className="text-lg font-light mb-1"
+            style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+          >
+            Acciones Rápidas
+          </h2>
+          <p
+            className="text-xs mb-6 uppercase tracking-[.1em]"
+            style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}
+          >
+            Configuración inicial
+          </p>
+
+          <div className="space-y-2">
             {[
               { label: 'Agregar Producto', icon: Package, desc: 'Sube tu primer producto', disabled: true },
-              { label: 'Ver Tienda', icon: TrendingUp, desc: 'Preview en vivo', href: '/' },
+              { label: 'Ver Landing', icon: TrendingUp, desc: 'Preview en vivo', href: '/' },
               { label: 'Configurar Pagos', icon: DollarSign, desc: 'Métodos de pago', disabled: true },
               { label: 'Mi Perfil', icon: Users, desc: 'Editar información', href: '/dashboard/settings' },
             ].map((action, index) => {
               const Icon = action.icon
               const content = (
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5 text-gray-400" />
+                <div
+                  className="flex items-center gap-3 p-3 transition-all duration-200"
+                  style={{
+                    borderLeft: '2px solid transparent',
+                    cursor: action.disabled ? 'not-allowed' : 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!action.disabled) {
+                      e.currentTarget.style.borderLeftColor = 'rgba(201,168,76,.3)'
+                      e.currentTarget.style.background = 'rgba(245,240,232,.02)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderLeftColor = 'transparent'
+                    e.currentTarget.style.background = 'transparent'
+                  }}
+                >
+                  <div
+                    className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      border: '1px solid rgba(245,240,232,.05)',
+                      background: 'rgba(245,240,232,.02)',
+                    }}
+                  >
+                    <Icon
+                      className="w-4 h-4"
+                      style={{
+                        color: action.disabled ? 'rgba(245,240,232,.15)' : 'rgba(245,240,232,.4)',
+                        strokeWidth: 1.5,
+                      }}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${action.disabled ? 'text-gray-500' : 'text-gray-200'}`}>
+                    <p
+                      className="text-xs uppercase tracking-[.08em]"
+                      style={{
+                        fontFamily: "'Jost', sans-serif",
+                        color: action.disabled ? 'rgba(245,240,232,.15)' : 'rgba(245,240,232,.55)',
+                      }}
+                    >
                       {action.label}
                     </p>
-                    <p className="text-xs text-gray-600">{action.desc}</p>
+                    <p
+                      className="text-[10px] mt-0.5"
+                      style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}
+                    >
+                      {action.desc}
+                    </p>
                   </div>
                   {action.disabled && (
-                    <span className="text-[10px] bg-gray-800 text-gray-600 px-1.5 py-0.5 rounded">Pronto</span>
+                    <span
+                      className="text-[9px] px-1.5 py-0.5"
+                      style={{
+                        fontFamily: "'Jost', sans-serif",
+                        letterSpacing: '.08em',
+                        textTransform: 'uppercase' as const,
+                        color: 'rgba(245,240,232,.2)',
+                        background: 'rgba(245,240,232,.03)',
+                      }}
+                    >
+                      Pronto
+                    </span>
                   )}
                 </div>
               )
 
               if (action.disabled) {
                 return (
-                  <div key={index} className="opacity-50 cursor-not-allowed">
+                  <div key={index} className="opacity-50">
                     {content}
                   </div>
                 )
@@ -206,35 +362,81 @@ export default async function DashboardPage() {
                 </Link>
               )
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card className="bg-gray-900 border-gray-800">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">
-                  {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-                </span>
-              </div>
-              <div>
-                <p className="text-white font-medium">{user?.name}</p>
-                <p className="text-gray-500 text-sm">{user?.email}</p>
-                <p className="text-gray-600 text-xs mt-0.5">
-                  Rol: {user?.role === 'admin' ? 'Administrador' : 'Usuario'} • Miembro desde hoy
-                </p>
-              </div>
+      {/* User Info Card */}
+      <div
+        className="p-6"
+        style={{
+          background: 'rgba(28,28,28,.3)',
+          border: '1px solid rgba(245,240,232,.06)',
+        }}
+      >
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 flex items-center justify-center"
+              style={{
+                background: 'rgba(201,168,76,.1)',
+                border: '2px solid rgba(201,168,76,.2)',
+              }}
+            >
+              <span
+                className="text-lg font-light"
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  color: '#C9A84C',
+                }}
+              >
+                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+              </span>
             </div>
-            <Link href="/dashboard/settings">
-              <Button variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800">
-                Editar Perfil
-              </Button>
-            </Link>
+            <div>
+              <p
+                className="text-sm"
+                style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)' }}
+              >
+                {user?.name}
+              </p>
+              <p
+                className="text-xs mt-0.5"
+                style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)' }}
+              >
+                {user?.email}
+              </p>
+              <p
+                className="text-[10px] mt-1 uppercase tracking-[.08em]"
+                style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}
+              >
+                Rol: {user?.role === 'admin' ? 'Administrador' : 'Usuario'}
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          <Link href="/dashboard/settings">
+            <button
+              className="text-xs uppercase tracking-[.18em] font-medium px-5 py-2.5 transition-all duration-300 cursor-pointer"
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                background: 'transparent',
+                color: 'rgba(245,240,232,.5)',
+                border: '1px solid rgba(245,240,232,.12)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(201,168,76,.4)'
+                e.currentTarget.style.color = '#C9A84C'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(245,240,232,.12)'
+                e.currentTarget.style.color = 'rgba(245,240,232,.5)'
+              }}
+            >
+              Editar Perfil
+            </button>
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

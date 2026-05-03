@@ -3,12 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeOff, Loader2, Shield, UserPlus, Check, X } from 'lucide-react'
+import { Check, X, Loader2, Shield, UserPlus } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -21,7 +17,6 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Password strength indicators
   const hasMinLength = password.length >= 8
   const hasUpperCase = /[A-Z]/.test(password)
   const hasNumber = /[0-9]/.test(password)
@@ -63,7 +58,6 @@ export default function RegisterPage() {
         return
       }
 
-      // Redirect to login with success message (avoid signIn issues with Next.js 16)
       router.push('/login?registered=true')
     } catch (err) {
       setError('Error al conectar con el servidor')
@@ -72,170 +66,319 @@ export default function RegisterPage() {
     }
   }
 
-  const strengthColor = passwordStrength <= 1 ? 'bg-red-500' : passwordStrength <= 2 ? 'bg-orange-500' : passwordStrength <= 3 ? 'bg-yellow-500' : 'bg-green-500'
-  const strengthText = passwordStrength <= 1 ? 'Débil' : passwordStrength <= 2 ? 'Regular' : passwordStrength <= 3 ? 'Buena' : 'Excelente'
+  const getStrengthColor = () => {
+    if (passwordStrength <= 1) return '#ef4444'
+    if (passwordStrength <= 2) return '#f97316'
+    if (passwordStrength <= 3) return '#eab308'
+    return '#22c55e'
+  }
+
+  const getStrengthText = () => {
+    if (passwordStrength <= 1) return 'Débil'
+    if (passwordStrength <= 2) return 'Regular'
+    if (passwordStrength <= 3) return 'Buena'
+    return 'Excelente'
+  }
+
+  const inputStyle = {
+    fontFamily: "'Jost', sans-serif",
+    background: 'rgba(10,10,10,.6)',
+    border: '1px solid rgba(245,240,232,.07)',
+    color: '#F5F0E8',
+    caretColor: '#C9A84C',
+  } as React.CSSProperties
+
+  const labelStyle = {
+    fontFamily: "'Jost', sans-serif",
+    color: 'rgba(245,240,232,.55)',
+    fontSize: '.7rem',
+    letterSpacing: '.12em',
+    textTransform: 'uppercase' as const,
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
-      {/* Background effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
-      </div>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: '#0A0A0A' }}
+    >
+      {/* Decorative background glows */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,.1) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(201,168,76,.05) 0%, transparent 50%)',
+        }}
+      />
+
+      {/* Vertical decorative lines */}
+      <div
+        className="hidden sm:block absolute left-12 top-0 bottom-0 w-px opacity-0 lg:opacity-100"
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(201,168,76,.3), transparent)' }}
+      />
+      <div
+        className="hidden sm:block absolute right-12 top-0 bottom-0 w-px opacity-0 lg:opacity-100"
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(201,168,76,.3), transparent)' }}
+      />
 
       <div className="relative w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-white tracking-tight">
-              JO<span className="text-blue-400">-Shop</span>
+            <h1
+              className="text-4xl font-light tracking-wide"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                color: '#F5F0E8',
+              }}
+            >
+              <span style={{ color: '#C9A84C' }}>JO</span>
             </h1>
           </Link>
-          <p className="text-gray-400 mt-2 text-sm">Crea tu cuenta de administrador</p>
+          <p
+            className="mt-3 text-xs uppercase tracking-[.18em]"
+            style={{
+              fontFamily: "'Jost', sans-serif",
+              color: 'rgba(245,240,232,.45)',
+            }}
+          >
+            Crea tu cuenta de administrador
+          </p>
         </div>
 
-        <Card className="bg-gray-900/80 border-gray-800 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-3">
-              <UserPlus className="w-6 h-6 text-purple-400" />
+        {/* Gold divider */}
+        <div
+          className="w-16 h-px mx-auto mb-8"
+          style={{ background: 'linear-gradient(to right, transparent, rgba(201,168,76,.5), transparent)' }}
+        />
+
+        {/* Register Card */}
+        <div
+          className="border p-8 sm:p-10"
+          style={{
+            background: 'rgba(28,28,28,.4)',
+            borderColor: 'rgba(245,240,232,.07)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div className="text-center mb-8">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ border: '1px solid rgba(201,168,76,.2)', background: 'rgba(201,168,76,.05)' }}
+            >
+              <UserPlus className="w-5 h-5" style={{ color: '#C9A84C' }} />
             </div>
-            <CardTitle className="text-xl text-white">Crear Cuenta</CardTitle>
-            <CardDescription className="text-gray-400">
-              Regístrate para gestionar tu tienda
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+            <h2
+              className="text-2xl font-light mb-2"
+              style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+            >
+              Crear Cuenta
+            </h2>
+            <p
+              className="text-sm"
+              style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.45)' }}
+            >
+              Regístrate para gestionar tu panel
+            </p>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-300 text-sm">Nombre completo</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Juan Pérez"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20"
-                  disabled={loading}
-                />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div
+                className="border p-3 text-sm text-center"
+                style={{
+                  background: 'rgba(239,68,68,.05)',
+                  borderColor: 'rgba(239,68,68,.2)',
+                  color: '#f87171',
+                }}
+              >
+                {error}
               </div>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300 text-sm">Email</Label>
+            <div className="space-y-2">
+              <label htmlFor="name" style={labelStyle}>Nombre completo</label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Juan Pérez"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={loading}
+                className="h-11 text-sm font-light transition-colors duration-300"
+                style={inputStyle}
+                onFocus={(e) => { e.target.style.borderColor = 'rgba(201,168,76,.4)' }}
+                onBlur={(e) => { e.target.style.borderColor = 'rgba(245,240,232,.07)' }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="email" style={labelStyle}>Email</label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="h-11 text-sm font-light transition-colors duration-300"
+                style={inputStyle}
+                onFocus={(e) => { e.target.style.borderColor = 'rgba(201,168,76,.4)' }}
+                onBlur={(e) => { e.target.style.borderColor = 'rgba(245,240,232,.07)' }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password" style={labelStyle}>Contraseña</label>
+              <div className="relative">
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20"
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-300 text-sm">Contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20 pr-10"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-
-                {/* Password strength */}
-                {password.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${strengthColor} rounded-full transition-all duration-300`}
-                          style={{ width: `${(passwordStrength / 4) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400 min-w-[60px]">{strengthText}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <div className={`flex items-center gap-1.5 text-xs ${hasMinLength ? 'text-green-400' : 'text-gray-500'}`}>
-                        {hasMinLength ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                        8+ caracteres
-                      </div>
-                      <div className={`flex items-center gap-1.5 text-xs ${hasUpperCase ? 'text-green-400' : 'text-gray-500'}`}>
-                        {hasUpperCase ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                        Una mayúscula
-                      </div>
-                      <div className={`flex items-center gap-1.5 text-xs ${hasNumber ? 'text-green-400' : 'text-gray-500'}`}>
-                        {hasNumber ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                        Un número
-                      </div>
-                      <div className={`flex items-center gap-1.5 text-xs ${hasSpecial ? 'text-green-400' : 'text-gray-500'}`}>
-                        {hasSpecial ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                        Un especial (!@#$)
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-300 text-sm">Confirmar contraseña</Label>
-                <Input
-                  id="confirmPassword"
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20"
                   disabled={loading}
+                  className="h-11 text-sm font-light pr-10 transition-colors duration-300"
+                  style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(201,168,76,.4)' }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(245,240,232,.07)' }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                  style={{ color: 'rgba(245,240,232,.3)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.6)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.3)')}
+                >
+                  {showPassword ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                </button>
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                disabled={loading || passwordStrength < 4}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creando cuenta...
-                  </>
-                ) : (
-                  'Crear Cuenta'
-                )}
-              </Button>
-              <p className="text-center text-sm text-gray-400">
-                ¿Ya tienes cuenta?{' '}
-                <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                  Iniciar sesión
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
 
-        <p className="text-center text-xs text-gray-600 mt-6 flex items-center justify-center gap-1.5">
+              {/* Password strength meter */}
+              {password.length > 0 && (
+                <div className="space-y-2.5 mt-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-px overflow-hidden" style={{ background: 'rgba(245,240,232,.07)' }}>
+                      <div
+                        className="h-full transition-all duration-300"
+                        style={{
+                          width: `${(passwordStrength / 4) * 100}%`,
+                          background: getStrengthColor(),
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="text-xs min-w-[60px] text-right"
+                      style={{
+                        fontFamily: "'Jost', sans-serif",
+                        color: 'rgba(245,240,232,.35)',
+                      }}
+                    >
+                      {getStrengthText()}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: '8+ caracteres', met: hasMinLength },
+                      { label: 'Una mayúscula', met: hasUpperCase },
+                      { label: 'Un número', met: hasNumber },
+                      { label: 'Un especial (!@#$)', met: hasSpecial },
+                    ].map((req) => (
+                      <div
+                        key={req.label}
+                        className="flex items-center gap-1.5 text-xs"
+                        style={{
+                          fontFamily: "'Jost', sans-serif",
+                          color: req.met ? '#4ade80' : 'rgba(245,240,232,.25)',
+                        }}
+                      >
+                        {req.met ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                        {req.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" style={labelStyle}>Confirmar contraseña</label>
+              <Input
+                id="confirmPassword"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={loading}
+                className="h-11 text-sm font-light transition-colors duration-300"
+                style={inputStyle}
+                onFocus={(e) => { e.target.style.borderColor = 'rgba(201,168,76,.4)' }}
+                onBlur={(e) => { e.target.style.borderColor = 'rgba(245,240,232,.07)' }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || passwordStrength < 4}
+              className="w-full h-12 mt-2 text-xs uppercase tracking-[.18em] font-medium transition-all duration-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                fontFamily: "'Jost', sans-serif",
+                background: loading ? 'rgba(201,168,76,.7)' : '#C9A84C',
+                color: '#0A0A0A',
+                border: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!loading && passwordStrength >= 4) e.currentTarget.style.background = '#E8C97A'
+              }}
+              onMouseLeave={(e) => {
+                if (!loading && passwordStrength >= 4) e.currentTarget.style.background = '#C9A84C'
+              }}
+              onMouseDown={(e) => {
+                if (!loading) e.currentTarget.style.transform = 'scale(0.98)'
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creando cuenta...
+                </span>
+              ) : (
+                'Crear Cuenta'
+              )}
+            </button>
+
+            <p
+              className="text-center text-sm mt-4"
+              style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.45)' }}
+            >
+              ¿Ya tienes cuenta?{' '}
+              <Link
+                href="/login"
+                className="transition-colors duration-200"
+                style={{ color: '#C9A84C' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#E8C97A')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#C9A84C')}
+              >
+                Iniciar sesión
+              </Link>
+            </p>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <p
+          className="text-center text-xs mt-8 flex items-center justify-center gap-1.5"
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            color: 'rgba(245,240,232,.25)',
+          }}
+        >
           <Shield className="w-3 h-3" />
           Tus datos están protegidos con encriptación
         </p>

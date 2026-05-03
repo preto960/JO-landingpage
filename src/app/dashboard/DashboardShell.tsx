@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { signOut } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -28,7 +27,6 @@ import {
   ChevronRight,
   Store,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 const sidebarItems = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -48,6 +46,83 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
+function NavItem({
+  item,
+  isActive,
+  pathname,
+  onNavigate,
+}: {
+  item: typeof sidebarItems[number]
+  isActive: boolean
+  pathname: string
+  onNavigate?: () => void
+}) {
+  const Icon = item.icon
+
+  const baseStyle: React.CSSProperties = {
+    fontFamily: "'Jost', sans-serif",
+    fontSize: '.78rem',
+    fontWeight: 400,
+    letterSpacing: '.1em',
+    textTransform: 'uppercase' as const,
+    transition: 'all .2s ease',
+    borderRadius: '0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.65rem 0.75rem',
+    width: '100%',
+    cursor: item.disabled ? 'not-allowed' : 'pointer',
+    textDecoration: 'none',
+    borderLeft: isActive ? '2px solid #C9A84C' : '2px solid transparent',
+    color: isActive ? '#C9A84C' : item.disabled ? 'rgba(245,240,232,.15)' : 'rgba(245,240,232,.45)',
+    background: isActive ? 'rgba(201,168,76,.06)' : 'transparent',
+  }
+
+  return (
+    <Link
+      href={item.disabled ? '#' : item.href}
+      style={baseStyle}
+      onClick={(e) => {
+        if (item.disabled) {
+          e.preventDefault()
+          return
+        }
+        onNavigate?.()
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive && !item.disabled) {
+          e.currentTarget.style.color = 'rgba(245,240,232,.7)'
+          e.currentTarget.style.background = 'rgba(245,240,232,.03)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.color = item.disabled ? 'rgba(245,240,232,.15)' : 'rgba(245,240,232,.45)'
+          e.currentTarget.style.background = 'transparent'
+        }
+      }}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" style={{ strokeWidth: 1.5 }} />
+      <span>{item.label}</span>
+      {item.disabled && (
+        <span
+          className="ml-auto text-[9px] px-1.5 py-0.5"
+          style={{
+            fontFamily: "'Jost', sans-serif",
+            letterSpacing: '.08em',
+            textTransform: 'uppercase' as const,
+            color: 'rgba(245,240,232,.2)',
+            background: 'rgba(245,240,232,.03)',
+          }}
+        >
+          Pronto
+        </span>
+      )}
+    </Link>
+  )
+}
+
 export default function DashboardShell({
   user,
   children,
@@ -59,55 +134,73 @@ export default function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-950 flex">
+    <div className="min-h-screen flex" style={{ background: '#0A0A0A' }}>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-gray-900 border-r border-gray-800">
-        <div className="flex items-center h-16 px-6 border-b border-gray-800">
+      <aside
+        className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0"
+        style={{
+          background: '#111111',
+          borderRight: '1px solid rgba(245,240,232,.06)',
+        }}
+      >
+        {/* Logo */}
+        <div
+          className="flex items-center h-16 px-6"
+          style={{ borderBottom: '1px solid rgba(201,168,76,.1)' }}
+        >
           <Link href="/" className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-white">
-              JO<span className="text-blue-400">-Shop</span>
+            <h1
+              className="text-xl font-light tracking-wide"
+              style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+            >
+              <span style={{ color: '#C9A84C' }}>JO</span>
             </h1>
           </Link>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => {
-            const isActive = pathname === item.href
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.label}
-                href={item.disabled ? '#' : item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-                  isActive
-                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                    : item.disabled
-                    ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
-                )}
-                onClick={(e) => item.disabled && e.preventDefault()}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {item.label}
-                {item.disabled && (
-                  <span className="ml-auto text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded">
-                    Pronto
-                  </span>
-                )}
-              </Link>
-            )
-          })}
+
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-6 space-y-1 overflow-y-auto">
+          {sidebarItems.map((item) => (
+            <NavItem
+              key={item.label}
+              item={item}
+              isActive={pathname === item.href}
+              pathname={pathname}
+            />
+          ))}
         </nav>
-        <div className="p-4 border-t border-gray-800">
+
+        {/* User section at bottom */}
+        <div style={{ borderTop: '1px solid rgba(245,240,232,.06)' }} className="p-4">
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 bg-blue-500/20">
-              <AvatarFallback className="text-blue-400 text-sm font-semibold">
+            <Avatar
+              className="h-8 w-8"
+              style={{ background: 'rgba(201,168,76,.1)', border: '1px solid rgba(201,168,76,.15)' }}
+            >
+              <AvatarFallback
+                className="text-xs font-medium"
+                style={{
+                  fontFamily: "'Jost', sans-serif",
+                  color: '#C9A84C',
+                  background: 'transparent',
+                }}
+              >
                 {getInitials(user?.name || 'U')}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-200 truncate">{user?.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <p
+                className="text-xs truncate"
+                style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.6)' }}
+              >
+                {user?.name}
+              </p>
+              <p
+                className="text-[10px] truncate"
+                style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}
+              >
+                {user?.email}
+              </p>
             </div>
           </div>
         </div>
@@ -115,100 +208,186 @@ export default function DashboardShell({
 
       {/* Main Content */}
       <div className="flex-1 lg:pl-64">
-        <header className="sticky top-0 z-40 h-16 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 flex items-center justify-between px-4 lg:px-8">
+        {/* Top header */}
+        <header
+          className="sticky top-0 z-40 h-16 flex items-center justify-between px-4 lg:px-8"
+          style={{
+            background: 'rgba(10,10,10,.95)',
+            borderBottom: '1px solid rgba(245,240,232,.06)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
           <div className="flex items-center gap-4">
+            {/* Mobile hamburger */}
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden text-gray-400 hover:text-white">
+                <button
+                  className="lg:hidden p-2 transition-colors duration-200"
+                  style={{ color: 'rgba(245,240,232,.45)' }}
+                >
                   <Menu className="w-5 h-5" />
-                </Button>
+                </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 bg-gray-900 border-gray-800 p-0">
+              <SheetContent
+                side="left"
+                className="w-72 p-0"
+                style={{ background: '#111111', borderRight: '1px solid rgba(245,240,232,.06)' }}
+              >
                 <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
-                <div className="flex items-center h-16 px-6 border-b border-gray-800">
+                {/* Mobile sidebar header */}
+                <div
+                  className="flex items-center h-16 px-6"
+                  style={{ borderBottom: '1px solid rgba(201,168,76,.1)' }}
+                >
                   <Link href="/" className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-white">
-                      JO<span className="text-blue-400">-Shop</span>
+                    <h1
+                      className="text-xl font-light tracking-wide"
+                      style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
+                    >
+                      <span style={{ color: '#C9A84C' }}>JO</span>
                     </h1>
                   </Link>
                 </div>
-                <nav className="px-3 py-4 space-y-1">
-                  {sidebarItems.map((item) => {
-                    const isActive = pathname === item.href
-                    const Icon = item.icon
-                    return (
-                      <Link
-                        key={item.label}
-                        href={item.disabled ? '#' : item.href}
-                        onClick={() => !item.disabled && setSidebarOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                          isActive
-                            ? 'bg-blue-500/10 text-blue-400'
-                            : item.disabled
-                            ? 'text-gray-600 cursor-not-allowed'
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
-                        )}
-                      >
-                        <Icon className="w-5 h-5" />
-                        {item.label}
-                      </Link>
-                    )
-                  })}
+                {/* Mobile nav items */}
+                <nav className="px-2 py-6 space-y-1">
+                  {sidebarItems.map((item) => (
+                    <NavItem
+                      key={item.label}
+                      item={item}
+                      isActive={pathname === item.href}
+                      pathname={pathname}
+                      onNavigate={() => setSidebarOpen(false)}
+                    />
+                  ))}
                 </nav>
               </SheetContent>
             </Sheet>
-            <div className="hidden sm:flex items-center gap-1.5 text-sm">
-              <Link href="/dashboard" className="text-gray-400 hover:text-gray-200 transition-colors">
+
+            {/* Breadcrumb */}
+            <div className="hidden sm:flex items-center gap-2 text-sm">
+              <Link
+                href="/dashboard"
+                className="transition-colors duration-200"
+                style={{ color: 'rgba(245,240,232,.3)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.6)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.3)')}
+              >
                 <Home className="w-4 h-4" />
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
-              <span className="text-gray-200">
-                {pathname === '/dashboard' ? 'Dashboard' : pathname.split('/').pop()?.charAt(0).toUpperCase() + pathname.split('/').pop()?.slice(1)}
+              <ChevronRight className="w-3 h-3" style={{ color: 'rgba(245,240,232,.15)' }} />
+              <span style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.6)', fontSize: '.85rem' }}>
+                {pathname === '/dashboard'
+                  ? 'Dashboard'
+                  : pathname.split('/').pop()?.charAt(0).toUpperCase() + pathname.split('/').pop()?.slice(1)}
               </span>
             </div>
           </div>
+
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-white">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full" />
-            </Button>
+            {/* Notification bell */}
+            <button
+              className="relative p-2 transition-colors duration-200"
+              style={{ color: 'rgba(245,240,232,.35)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.6)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.35)')}
+            >
+              <Bell className="w-5 h-5" style={{ strokeWidth: 1.5 }} />
+              <span
+                className="absolute top-1.5 right-1.5 w-2 h-2"
+                style={{ background: '#C9A84C', borderRadius: '50%' }}
+              />
+            </button>
+
+            {/* Avatar dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 h-9 px-2">
-                  <Avatar className="h-7 w-7 bg-blue-500/20">
-                    <AvatarFallback className="text-blue-400 text-xs font-semibold">
+                <button
+                  className="flex items-center gap-2 h-9 px-2"
+                  style={{ color: 'rgba(245,240,232,.6)' }}
+                >
+                  <Avatar
+                    className="h-7 w-7"
+                    style={{ background: 'rgba(201,168,76,.1)', border: '1px solid rgba(201,168,76,.15)' }}
+                  >
+                    <AvatarFallback
+                      className="text-[10px] font-medium"
+                      style={{
+                        fontFamily: "'Jost', sans-serif",
+                        color: '#C9A84C',
+                        background: 'transparent',
+                      }}
+                    >
                       {getInitials(user?.name || 'U')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline text-sm text-gray-300">{user?.name}</span>
-                </Button>
+                  <span
+                    className="hidden sm:inline text-sm"
+                    style={{ fontFamily: "'Jost', sans-serif" }}
+                  >
+                    {user?.name}
+                  </span>
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800 w-56">
-                <DropdownMenuLabel className="text-gray-300">
+              <DropdownMenuContent
+                align="end"
+                className="w-56 p-1"
+                style={{
+                  background: '#1C1C1C',
+                  border: '1px solid rgba(245,240,232,.07)',
+                }}
+              >
+                <DropdownMenuLabel
+                  className="p-3"
+                  style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.6)' }}
+                >
                   <div className="flex flex-col">
-                    <span>{user?.name}</span>
-                    <span className="text-xs text-gray-500 font-normal">{user?.email}</span>
+                    <span className="text-sm" style={{ color: '#F5F0E8' }}>{user?.name}</span>
+                    <span className="text-[10px] mt-0.5" style={{ color: 'rgba(245,240,232,.3)' }}>
+                      {user?.email}
+                    </span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-800" />
-                <DropdownMenuItem asChild className="text-gray-400 focus:text-white focus:bg-gray-800 cursor-pointer">
-                  <Link href="/dashboard/settings">
-                    <Settings className="mr-2 h-4 w-4" />
+                <div
+                  className="my-1"
+                  style={{ height: '1px', background: 'rgba(245,240,232,.06)' }}
+                />
+                <DropdownMenuItem asChild className="cursor-pointer p-2.5">
+                  <Link
+                    href="/dashboard/settings"
+                    className="flex items-center gap-2 text-xs"
+                    style={{
+                      fontFamily: "'Jost', sans-serif",
+                      color: 'rgba(245,240,232,.5)',
+                      letterSpacing: '.05em',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#F5F0E8')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.5)')}
+                  >
+                    <Settings className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
                     Configuración
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => signOut({ callbackUrl: '/login' })}
-                  className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+                  className="cursor-pointer p-2.5"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar sesión
+                  <span
+                    className="flex items-center gap-2 text-xs"
+                    style={{
+                      fontFamily: "'Jost', sans-serif",
+                      color: '#f87171',
+                      letterSpacing: '.05em',
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
+                    Cerrar sesión
+                  </span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
+
         <main className="p-4 lg:p-8">
           {children}
         </main>

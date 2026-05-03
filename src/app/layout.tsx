@@ -1,38 +1,41 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import AuthProvider from "@/components/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "JO-Shop | Tu tienda digital en todos los dispositivos",
-  description: "JO-Shop es la solución digital premium para llevar tu negocio al siguiente nivel. Tienda online, app móvil y catálogo digital todo en uno.",
-  keywords: ["JO-Shop", "tienda online", "e-commerce", "app móvil", "catálogo digital", "negocio digital", "vender en línea"],
-  authors: [{ name: "JO-Shop" }],
+  title: "Panel de Administración",
+  description: "Panel de administración para gestionar tu landing page.",
+  keywords: ["admin", "landing page", "gestión", "panel"],
+  authors: [{ name: "Admin" }],
   icons: {
     icon: "/favicon.ico",
     apple: "/icon.png",
   },
   openGraph: {
-    title: "JO-Shop | Tu tienda digital en todos los dispositivos",
-    description: "Solución digital premium para llevar tu negocio al siguiente nivel. Tienda online, app móvil y catálogo digital todo en uno.",
-    siteName: "JO-Shop",
+    title: "Panel de Administración",
+    description: "Panel de administración para gestionar tu landing page.",
+    siteName: "Admin",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "JO-Shop | Tu tienda digital en todos los dispositivos",
-    description: "Solución digital premium para llevar tu negocio al siguiente nivel.",
+    title: "Panel de Administración",
+    description: "Panel de administración para gestionar tu landing page.",
   },
 };
 
@@ -44,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${cormorant.variable} ${jost.variable} antialiased`}
       >
         <AuthProvider>
           {children}
