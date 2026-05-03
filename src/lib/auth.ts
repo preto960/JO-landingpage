@@ -2,6 +2,14 @@ import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { db, verifyPassword } from '@/lib/db'
 
+// Build NEXTAUTH_URL dynamically to work behind reverse proxies (Caddy)
+const getNextAuthUrl = () => {
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL
+  // In production, trust the VERCEL_URL or fallback to constructing from headers
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return undefined // Let next-auth use the request Host header
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -76,6 +84,8 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+  // Set NEXTAUTH_URL dynamically — critical for cookie domain behind reverse proxies
+  ...(getNextAuthUrl() ? { url: getNextAuthUrl() } : {}),
   // Do NOT set pages.signIn — we handle redirects ourselves in the dashboard layout
   // Setting it causes redirect loops when the session check fails
   secret: process.env.NEXTAUTH_SECRET,

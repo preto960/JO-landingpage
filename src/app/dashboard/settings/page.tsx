@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,7 +29,7 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState('')
 
   // Load user data on mount from the API
-  useState(() => {
+  useEffect(() => {
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
@@ -41,7 +41,7 @@ export default function SettingsPage() {
         }
       })
       .catch(() => {})
-  })
+  }, [])
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()

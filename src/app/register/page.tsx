@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -64,19 +63,8 @@ export default function RegisterPage() {
         return
       }
 
-      // Auto-login after registration
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.ok) {
-        router.push('/dashboard')
-        router.refresh()
-      } else {
-        router.push('/login?registered=true')
-      }
+      // Redirect to login with success message (avoid signIn issues with Next.js 16)
+      router.push('/login?registered=true')
     } catch (err) {
       setError('Error al conectar con el servidor')
     } finally {

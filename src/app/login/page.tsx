@@ -1,7 +1,8 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +13,9 @@ import { Eye, EyeOff, Loader2, Shield, LogIn } from 'lucide-react'
 
 function LoginForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const registered = searchParams.get('registered') === 'true'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,57 +29,37 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      // Step 1: Get CSRF token from next-auth
-      const csrfRes = await fetch('/api/auth/csrf')
-      if (!csrfRes.ok) {
-        throw new Error('No se pudo obtener el token de seguridad')
-      }
-      const { csrfToken } = await csrfRes.json()
-
-      // Step 2: Submit credentials directly to next-auth endpoint
-      const signInRes = await fetch('/api/auth/signin/credentials', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-        },
-        body: new URLSearchParams({
-          csrfToken,
-          email,
-          password,
-          callbackUrl,
-        }).toString(),
+      // Use signIn with redirect: false first to check credentials
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
       })
 
-      // Step 3: Process response
-      if (signInRes.ok) {
-        // Check response — next-auth returns JSON with url on success
-        const contentType = signInRes.headers.get('content-type') || ''
-        if (contentType.includes('application/json')) {
-          const data = await signInRes.json()
-          if (data.url) {
-            // Success — hard redirect to dashboard
-            window.location.replace(data.url)
-            return
-          }
-          if (data.error) {
-            setError('Credenciales incorrectas. Verifica tu email y contraseña.')
-            setLoading(false)
-            return
-          }
-        }
-        // If we got here without JSON, the Set-Cookie header was likely set
-        // Do a hard redirect to dashboard
-        window.location.replace(callbackUrl)
+      if (result?.error) {
+        setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+        setLoading(false)
         return
       }
 
-      // Non-ok response
-      setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+      if (result?.ok) {
+        // Successful login — do a hard navigation to dashboard
+        // Using router.replace alone may not work with server components
+        // window.location ensures cookies are sent on the next request
+        window.location.href = callbackUrl
+        return
+      }
+
+      // Fallback: try with redirect: true (full page POST, most reliable)
+      signIn('credentials', {
+        email,
+        password,
+        callbackUrl,
+      })
     } catch (err: any) {
       console.error('Login error:', err)
       setError(err?.message || 'Error al conectar con el servidor. Intenta de nuevo.')
-    } finally {
       setLoading(false)
     }
   }
@@ -110,6 +93,13 @@ function LoginForm() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
+              {registered && (
+                <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
+                  <AlertDescription>
+                    Cuenta creada exitosamente. Ya puedes iniciar sesión.
+                  </AlertDescription>
+                </Alert>
+              )}
               {error && (
                 <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
                   <AlertDescription>{error}</AlertDescription>
