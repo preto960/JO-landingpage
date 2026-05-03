@@ -210,22 +210,22 @@ export default function DashboardShell({
       <div className="flex-1 lg:pl-64">
         {/* Top header */}
         <header
-          className="sticky top-0 z-40 h-16 flex items-center justify-between px-4 lg:px-8"
+          className="sticky top-0 z-40 h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 lg:px-8"
           style={{
             background: 'rgba(10,10,10,.95)',
             borderBottom: '1px solid rgba(245,240,232,.06)',
             backdropFilter: 'blur(20px)',
           }}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Mobile hamburger */}
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
                 <button
-                  className="lg:hidden p-2 transition-colors duration-200"
+                  className="lg:hidden p-1.5 sm:p-2 transition-colors duration-200"
                   style={{ color: 'rgba(245,240,232,.45)' }}
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-5 h-5" style={{ strokeWidth: 1.5 }} />
                 </button>
               </SheetTrigger>
               <SheetContent
@@ -388,7 +388,7 @@ export default function DashboardShell({
           </div>
         </header>
 
-        <main className="p-4 lg:p-8">
+        <main className="p-3 sm:p-4 lg:p-8">
           {children}
         </main>
       </div>

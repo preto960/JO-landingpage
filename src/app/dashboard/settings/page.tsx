@@ -145,10 +145,10 @@ export default function SettingsPage() {
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '42rem' }}>
+    <div className="flex flex-col gap-5 sm:gap-8" style={{ maxWidth: '42rem' }}>
       {/* Header */}
       <div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.875rem', fontWeight: 300, color: '#F5F0E8', margin: 0 }}>Configuración</h1>
+        <h1 className="text-[1.5rem] sm:text-[1.875rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: '#F5F0E8', margin: 0 }}>Configuración</h1>
         <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: 'rgba(245,240,232,.4)', marginTop: '.5rem' }}>Gestiona tu cuenta y preferencias</p>
       </div>
 
@@ -156,10 +156,10 @@ export default function SettingsPage() {
       <div style={{ width: '100%', height: '1px', background: 'linear-gradient(to right, rgba(201,168,76,.3), transparent)' }} />
 
       {/* Profile */}
-      <div style={cardStyle}>
+      <div className="p-4 sm:p-6" style={cardStyle}>
         {sectionHeader(<User style={{ width: '1.25rem', height: '1.25rem', color: '#C9A84C' }} />, 'Perfil', 'Tu información personal')}
 
-        <form onSubmit={handleProfileUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleProfileUpdate} className="flex flex-col gap-4 sm:gap-5">
           {profileMessage && (
             <div style={{ background: 'rgba(34,197,94,.05)', border: '1px solid rgba(34,197,94,.15)', padding: '.75rem', fontSize: '.85rem', fontFamily: "'Jost', sans-serif", color: '#4ade80', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
               <CheckCircle2 style={{ width: '1rem', height: '1rem', flexShrink: 0 }} />
@@ -183,17 +183,17 @@ export default function SettingsPage() {
             <input value={role === 'admin' ? 'Administrador' : 'Usuario'} disabled style={{ ...inputBase, opacity: 0.4, cursor: 'not-allowed' }} />
           </div>
 
-          <button type="submit" disabled={saving || name === originalName} style={{ ...goldBtn, opacity: (saving || name === originalName) ? 0.4 : 1, cursor: (saving || name === originalName) ? 'not-allowed' : 'pointer' }} onMouseEnter={(e) => { if (!saving && name !== originalName) e.currentTarget.style.background = '#E8C97A' }} onMouseLeave={(e) => { if (!saving && name !== originalName) e.currentTarget.style.background = '#C9A84C' }}>
+          <button type="submit" disabled={saving || name === originalName} className="w-full sm:w-auto" style={{ ...goldBtn, opacity: (saving || name === originalName) ? 0.4 : 1, cursor: (saving || name === originalName) ? 'not-allowed' : 'pointer' }} onMouseEnter={(e) => { if (!saving && name !== originalName) e.currentTarget.style.background = '#E8C97A' }} onMouseLeave={(e) => { if (!saving && name !== originalName) e.currentTarget.style.background = '#C9A84C' }}>
             {saving ? (<><Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />Guardando...</>) : (<><Save style={{ width: '1rem', height: '1rem' }} />Guardar Cambios</>)}
           </button>
         </form>
       </div>
 
       {/* Password */}
-      <div style={cardStyle}>
+      <div className="p-4 sm:p-6" style={cardStyle}>
         {sectionHeader(<Key style={{ width: '1.25rem', height: '1.25rem', color: '#E8C97A' }} />, 'Cambiar Contraseña', 'Actualiza tu contraseña de acceso')}
 
-        <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 sm:gap-5">
           {passwordError && (
             <div style={{ background: 'rgba(239,68,68,.05)', border: '1px solid rgba(239,68,68,.15)', padding: '.75rem', fontSize: '.85rem', fontFamily: "'Jost', sans-serif", color: '#f87171' }}>{passwordError}</div>
           )}
@@ -231,17 +231,17 @@ export default function SettingsPage() {
             <input id="confirm-new-password" type={showNewPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required disabled={changingPassword} style={inputBase} onFocus={handleFocus} onBlur={handleBlur} />
           </div>
 
-          <button type="submit" disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword} style={{ ...goldBtn, opacity: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 0.4 : 1, cursor: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 'not-allowed' : 'pointer' }} onMouseEnter={(e) => { if (!changingPassword && currentPassword && newPassword && confirmNewPassword) e.currentTarget.style.background = '#E8C97A' }} onMouseLeave={(e) => { if (!changingPassword && currentPassword && newPassword && confirmNewPassword) e.currentTarget.style.background = '#C9A84C' }}>
+          <button type="submit" disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword} className="w-full sm:w-auto" style={{ ...goldBtn, opacity: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 0.4 : 1, cursor: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 'not-allowed' : 'pointer' }} onMouseEnter={(e) => { if (!changingPassword && currentPassword && newPassword && confirmNewPassword) e.currentTarget.style.background = '#E8C97A' }} onMouseLeave={(e) => { if (!changingPassword && currentPassword && newPassword && confirmNewPassword) e.currentTarget.style.background = '#C9A84C' }}>
             {changingPassword ? (<><Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />Cambiando...</>) : (<><Key style={{ width: '1rem', height: '1rem' }} />Cambiar Contraseña</>)}
           </button>
         </form>
       </div>
 
       {/* Session / Danger Zone */}
-      <div style={{ ...cardStyle, borderColor: 'rgba(239,68,68,.1)' }}>
+      <div className="p-4 sm:p-6" style={{ ...cardStyle, borderColor: 'rgba(239,68,68,.1)' }}>
         {sectionHeader(<LogOut style={{ width: '1.25rem', height: '1.25rem', color: '#f87171' }} />, 'Sesión', 'Cierra tu sesión actual')}
 
-        <button onClick={() => signOut({ callbackUrl: '/login' })} style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', fontWeight: 500, letterSpacing: '.18em', textTransform: 'uppercase', height: '2.5rem', padding: '0 1.25rem', background: 'transparent', color: 'rgba(248,113,113,.7)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 0, cursor: 'pointer', transition: 'all .2s', display: 'inline-flex', alignItems: 'center', gap: '.5rem' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,.4)'; e.currentTarget.style.background = 'rgba(239,68,68,.05)'; e.currentTarget.style.color = '#f87171' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,.2)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(248,113,113,.7)' }}>
+        <button onClick={() => signOut({ callbackUrl: '/login' })} className="w-full sm:w-auto" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', fontWeight: 500, letterSpacing: '.18em', textTransform: 'uppercase', height: '2.5rem', padding: '0 1.25rem', background: 'transparent', color: 'rgba(248,113,113,.7)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 0, cursor: 'pointer', transition: 'all .2s', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,.4)'; e.currentTarget.style.background = 'rgba(239,68,68,.05)'; e.currentTarget.style.color = '#f87171' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(239,68,68,.2)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(248,113,113,.7)' }}>
           <LogOut style={{ width: '1rem', height: '1rem' }} />
           Cerrar Sesión
         </button>
