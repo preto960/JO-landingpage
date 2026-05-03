@@ -27,24 +27,22 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      const result = await signIn('credentials', {
+      const res = await signIn('credentials', {
         email,
         password,
-        redirect: false,
+        callbackUrl,
+        redirect: true,
       })
 
-      if (result?.error) {
-        setError('Credenciales incorrectas. Verifica tu email y contraseña.')
-      } else if (result?.ok) {
-        // Hard redirect to ensure session cookie is set before navigation
-        window.location.href = callbackUrl
-      } else {
-        // result might be undefined in some cases — treat as success
-        window.location.href = callbackUrl
-      }
+      // If redirect: true doesn't work (shouldn't reach here on success)
+      // eslint-disable-next-line no-unused-expressions
     } catch (err: any) {
+      // signIn with redirect: true throws on error, which we catch here
       console.error('Login error:', err)
-      setError(err?.message || 'Error al conectar con el servidor. Intenta de nuevo.')
+      const errorMsg = err?.message || 'Credenciales incorrectas. Verifica tu email y contraseña.'
+      setError(typeof errorMsg === 'string' && errorMsg.includes('fetch')
+        ? 'Error de conexión con el servidor. Intenta de nuevo.'
+        : errorMsg)
       setLoading(false)
     }
   }
@@ -136,12 +134,6 @@ function LoginForm() {
                   'Ingresar al Panel'
                 )}
               </Button>
-              {/* <p className="text-center text-sm text-gray-400">
-                ¿No tienes cuenta?{' '}
-                <Link href="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                  Crear cuenta
-                </Link>
-              </p> */}
             </CardFooter>
           </form>
         </Card>

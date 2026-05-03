@@ -3,6 +3,10 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { db, verifyPassword } from '@/lib/db'
 
 export const authOptions: NextAuthOptions = {
+  // Trust the Host header from the request instead of relying on NEXTAUTH_URL
+  // This is critical for Vercel / container deployments where the URL is dynamic
+  trustHost: true,
+
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -41,7 +45,7 @@ export const authOptions: NextAuthOptions = {
           await db.user.update({
             where: { id: user.id },
             data: { lastLogin: new Date() },
-          })
+          }).catch(() => {})
 
           return {
             id: user.id,
@@ -59,7 +63,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60,
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -80,5 +84,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
+  // Fallback to process.env.NEXTAUTH_SECRET
   secret: process.env.NEXTAUTH_SECRET,
 }
