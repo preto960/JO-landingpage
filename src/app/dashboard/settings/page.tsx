@@ -285,7 +285,7 @@ export default function SettingsPage() {
           <div>
             <h2
               className="text-lg font-light"
-              style={{ fontFamily: "'Cormorant Garamond", serif', color: '#F5F0E8' }}
+              style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
             >
               Cambiar Contraseña
             </h2>
