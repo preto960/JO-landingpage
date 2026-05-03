@@ -1,6 +1,5 @@
-'use client'
-
-import { useSession } from 'next-auth/react'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import {
   Card,
   CardContent,
@@ -15,7 +14,6 @@ import {
   DollarSign,
   TrendingUp,
   ArrowUpRight,
-  ArrowDownRight,
   Eye,
   Package,
   Star,
@@ -61,13 +59,12 @@ const stats = [
   },
 ]
 
-export default function DashboardPage() {
-  const { data: session } = useSession()
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions)
   const user = session?.user as any
 
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-white">
           Bienvenido, {user?.name?.split(' ')[0] || 'Admin'} 👋
@@ -77,7 +74,6 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => {
           const Icon = stat.icon
@@ -89,10 +85,9 @@ export default function DashboardPage() {
                     <Icon className={`w-5 h-5 ${stat.color}`} />
                   </div>
                   <div className={`flex items-center text-xs font-medium ${
-                    stat.trend === 'up' ? 'text-green-400' : stat.trend === 'down' ? 'text-red-400' : 'text-gray-500'
+                    stat.trend === 'up' ? 'text-green-400' : 'text-gray-500'
                   }`}>
                     {stat.trend === 'up' && <ArrowUpRight className="w-3 h-3 mr-0.5" />}
-                    {stat.trend === 'down' && <ArrowDownRight className="w-3 h-3 mr-0.5" />}
                     {stat.change}
                   </div>
                 </div>
@@ -106,9 +101,7 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
         <Card className="lg:col-span-2 bg-gray-900 border-gray-800">
           <CardHeader>
             <CardTitle className="text-white text-lg">Actividad Reciente</CardTitle>
@@ -168,7 +161,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
             <CardTitle className="text-white text-lg">Acciones Rápidas</CardTitle>
@@ -219,7 +211,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Account Info */}
       <Card className="bg-gray-900 border-gray-800">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

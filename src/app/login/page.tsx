@@ -1,7 +1,6 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -27,36 +26,69 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      const res = await signIn('credentials', {
-        email,
-        password,
-        callbackUrl,
-        redirect: true,
+      // Step 1: Get CSRF token from next-auth
+      const csrfRes = await fetch('/api/auth/csrf')
+      if (!csrfRes.ok) {
+        throw new Error('No se pudo obtener el token de seguridad')
+      }
+      const { csrfToken } = await csrfRes.json()
+
+      // Step 2: Submit credentials directly to next-auth endpoint
+      const signInRes = await fetch('/api/auth/signin/credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: new URLSearchParams({
+          csrfToken,
+          email,
+          password,
+          callbackUrl,
+        }).toString(),
       })
 
-      // If redirect: true doesn't work (shouldn't reach here on success)
-      // eslint-disable-next-line no-unused-expressions
+      // Step 3: Process response
+      if (signInRes.ok) {
+        // Check response — next-auth returns JSON with url on success
+        const contentType = signInRes.headers.get('content-type') || ''
+        if (contentType.includes('application/json')) {
+          const data = await signInRes.json()
+          if (data.url) {
+            // Success — hard redirect to dashboard
+            window.location.replace(data.url)
+            return
+          }
+          if (data.error) {
+            setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+            setLoading(false)
+            return
+          }
+        }
+        // If we got here without JSON, the Set-Cookie header was likely set
+        // Do a hard redirect to dashboard
+        window.location.replace(callbackUrl)
+        return
+      }
+
+      // Non-ok response
+      setError('Credenciales incorrectas. Verifica tu email y contraseña.')
     } catch (err: any) {
-      // signIn with redirect: true throws on error, which we catch here
       console.error('Login error:', err)
-      const errorMsg = err?.message || 'Credenciales incorrectas. Verifica tu email y contraseña.'
-      setError(typeof errorMsg === 'string' && errorMsg.includes('fetch')
-        ? 'Error de conexión con el servidor. Intenta de nuevo.'
-        : errorMsg)
+      setError(err?.message || 'Error al conectar con el servidor. Intenta de nuevo.')
+    } finally {
       setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
-      {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <h1 className="text-3xl font-bold text-white tracking-tight">

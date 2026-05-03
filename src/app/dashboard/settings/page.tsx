@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,20 +8,17 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
-import { Loader2, Shield, User, Key, LogOut, Save, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Loader2, User, Key, LogOut, Save, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { data: session, update: updateSession } = useSession()
-  const router = useRouter()
-  const user = session?.user as any
-
-  // Profile form
-  const [name, setName] = useState(user?.name || '')
-  const [email] = useState(user?.email || '')
+  // Get user data from data attribute (set by server component wrapper)
+  const [name, setName] = useState('')
+  const [email] = useState('')
+  const [role] = useState('')
+  const [originalName] = useState('')
   const [saving, setSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
 
-  // Password form
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmNewPassword, setConfirmNewPassword] = useState('')
@@ -32,6 +27,21 @@ export default function SettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState('')
   const [passwordError, setPasswordError] = useState('')
+
+  // Load user data on mount from the API
+  useState(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setName(data.user.name)
+          setEmail(data.user.email)
+          setRole(data.user.role)
+          setOriginalName(data.user.name)
+        }
+      })
+      .catch(() => {})
+  })
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,7 +57,6 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setProfileMessage('Perfil actualizado correctamente')
-        await updateSession({ name })
       }
     } catch {
       setProfileMessage('')
@@ -150,7 +159,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label className="text-gray-300 text-sm">Rol</Label>
               <Input
-                value={user?.role === 'admin' ? 'Administrador' : 'Usuario'}
+                value={role === 'admin' ? 'Administrador' : 'Usuario'}
                 disabled
                 className="bg-gray-800/30 border-gray-700 text-gray-500 cursor-not-allowed"
               />
@@ -158,7 +167,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={saving || name === user?.name}
+              disabled={saving || name === originalName}
             >
               {saving ? (
                 <>
