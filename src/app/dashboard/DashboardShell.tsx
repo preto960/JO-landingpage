@@ -26,16 +26,32 @@ import {
   Home,
   ChevronRight,
   Store,
+  Shield,
 } from 'lucide-react'
+import { ROLE_LABELS, ROLE_COLORS, Role, hasMinRole } from '@/lib/rbac'
 
-const sidebarItems = [
+type SidebarItem = {
+  label: string
+  icon: any
+  href: string
+  disabled?: boolean
+  minRole?: Role
+}
+
+const allSidebarItems: SidebarItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { label: 'Productos', icon: ShoppingCart, href: '/dashboard', disabled: true },
   { label: 'Pedidos', icon: Store, href: '/dashboard', disabled: true },
-  { label: 'Clientes', icon: Users, href: '/dashboard', disabled: true },
-  { label: 'Estadísticas', icon: BarChart3, href: '/dashboard', disabled: true },
-  { label: 'Configuración', icon: Settings, href: '/dashboard/settings' },
+  { label: 'Usuarios', icon: Shield, href: '/dashboard/users', minRole: 'super_admin' },
+  { label: 'Configuración', icon: Settings, href: '/dashboard/settings', minRole: 'admin' },
 ]
+
+function getVisibleItems(userRole: string): SidebarItem[] {
+  return allSidebarItems.filter((item) => {
+    if (item.minRole) return hasMinRole(userRole as Role, item.minRole)
+    return true
+  })
+}
 
 function getInitials(name: string) {
   return name
@@ -160,7 +176,7 @@ export default function DashboardShell({
 
         {/* Nav items */}
         <nav className="flex-1 px-2 py-6 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => (
+          {getVisibleItems(user?.role || 'viewer').map((item) => (
             <NavItem
               key={item.label}
               item={item}
@@ -201,6 +217,12 @@ export default function DashboardShell({
               >
                 {user?.email}
               </p>
+              <span
+                className="inline-block mt-1 px-1.5 py-0.5"
+                style={{ fontFamily: "'Jost', sans-serif", fontSize: '.5rem', textTransform: 'uppercase', letterSpacing: '.08em', color: ROLE_COLORS[(user?.role as Role) || 'viewer'], background: 'rgba(201,168,76,.05)' }}
+              >
+                {ROLE_LABELS[(user?.role as Role) || 'viewer']}
+              </span>
             </div>
           </div>
         </div>
@@ -250,7 +272,7 @@ export default function DashboardShell({
                 </div>
                 {/* Mobile nav items */}
                 <nav className="px-2 py-6 space-y-1">
-                  {sidebarItems.map((item) => (
+                  {getVisibleItems(user?.role || 'viewer').map((item) => (
                     <NavItem
                       key={item.label}
                       item={item}
@@ -351,6 +373,7 @@ export default function DashboardShell({
                   className="my-1"
                   style={{ height: '1px', background: 'rgba(245,240,232,.06)' }}
                 />
+                {['admin', 'super_admin'].includes(user?.role || '') && (
                 <DropdownMenuItem asChild className="cursor-pointer p-2.5">
                   <Link
                     href="/dashboard/settings"
@@ -367,6 +390,7 @@ export default function DashboardShell({
                     Configuración
                   </Link>
                 </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => signOut({ callbackUrl: '/login' })}
                   className="cursor-pointer p-2.5"

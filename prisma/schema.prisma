@@ -7,22 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  viewer
+  editor
+  admin
+  super_admin
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
   email         String    @unique
   emailVerified DateTime?
   password      String
-  role          String    @default("user") // "user" | "admin"
+  role          Role      @default(viewer)
   image         String?
   isActive      Boolean   @default(true)
   lastLogin     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  auditLogs AuditLog[]
+  accounts   Account[]
+  sessions   Session[]
+  auditLogs  AuditLog[]
+  invitesCreated  InviteCode[] @relation("Creator")
+  inviteUsed      InviteCode?  @relation("UsedBy", fields: [inviteCodeId], references: [id])
+  inviteCodeId    String?  @unique
 }
 
 model Account {
@@ -70,4 +80,18 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model InviteCode {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  role       Role     @default(viewer)
+  maxUses    Int      @default(1)
+  usedCount  Int      @default(0)
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+  createdBy  String
+  usedBy     User?    @relation("UsedBy")
+
+  creator User @relation("Creator", fields: [createdBy], references: [id], onDelete: Cascade)
 }

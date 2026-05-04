@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
 import { Loader2, User, Key, LogOut, Save, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { ROLE_LABELS, ROLE_COLORS, Role } from '@/lib/rbac'
 
 const inputBase: React.CSSProperties = {
   fontFamily: "'Jost', sans-serif",
@@ -180,7 +181,12 @@ export default function SettingsPage() {
 
           <div>
             <label style={labelBase}>Rol</label>
-            <input value={role === 'admin' ? 'Administrador' : 'Usuario'} disabled style={{ ...inputBase, opacity: 0.4, cursor: 'not-allowed' }} />
+            <div className="flex items-center gap-2">
+              <input value={ROLE_LABELS[(role as Role) || 'viewer']} disabled style={{ ...inputBase, opacity: 0.4, cursor: 'not-allowed', flex: 1 }} />
+              <span className="inline-block px-2 py-0.5 flex-shrink-0" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.55rem', textTransform: 'uppercase', letterSpacing: '.08em', color: ROLE_COLORS[(role as Role) || 'viewer'], background: 'rgba(201,168,76,.05)', border: '1px solid rgba(201,168,76,.1)' }}>
+                {ROLE_LABELS[(role as Role) || 'viewer']}
+              </span>
+            </div>
           </div>
 
           <button type="submit" disabled={saving || name === originalName} className="w-full sm:w-auto" style={{ ...goldBtn, opacity: (saving || name === originalName) ? 0.4 : 1, cursor: (saving || name === originalName) ? 'not-allowed' : 'pointer' }} onMouseEnter={(e) => { if (!saving && name !== originalName) e.currentTarget.style.background = '#E8C97A' }} onMouseLeave={(e) => { if (!saving && name !== originalName) e.currentTarget.style.background = '#C9A84C' }}>

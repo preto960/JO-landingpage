@@ -11,6 +11,7 @@ import {
   Star,
 } from 'lucide-react'
 import Link from 'next/link'
+import { ROLE_LABELS, ROLE_COLORS, Role } from '@/lib/rbac'
 
 const stats = [
   { title: 'Ventas Totales', value: '$0', change: '0%', trend: 'up' as const, icon: DollarSign, accent: '#22c55e' },
@@ -192,7 +193,7 @@ export default function DashboardContent({
             <div className="min-w-0">
               <p className="text-[.8rem] sm:text-[.85rem] truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)', margin: 0 }}>{user?.name}</p>
               <p className="text-[.75rem] sm:text-[.8rem] truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', margin: '.125rem 0' }}>{user?.email}</p>
-              <p className="text-[.6rem] sm:text-[.65rem]" style={{ fontFamily: "'Jost', sans-serif", textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(245,240,232,.2)', marginTop: '.125rem' }}>Rol: {user?.role === 'admin' ? 'Administrador' : 'Usuario'}</p>
+              <span className="inline-block px-1.5 py-0.5 mt-1" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.55rem', textTransform: 'uppercase', letterSpacing: '.08em', color: ROLE_COLORS[(user?.role as Role) || 'viewer'], background: 'rgba(201,168,76,.05)' }}>{ROLE_LABELS[(user?.role as Role) || 'viewer']}</span>
             </div>
           </div>
           <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={btnOutline} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.4)'; e.currentTarget.style.color = '#C9A84C' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.12)'; e.currentTarget.style.color = 'rgba(245,240,232,.5)' }}>

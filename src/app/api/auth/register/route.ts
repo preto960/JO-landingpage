@@ -11,6 +11,7 @@ const registerSchema = z.object({
     .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
     .regex(/[0-9]/, 'Debe contener al menos un número')
     .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
+  inviteCode: z.string().min(4, 'Código de invitación requerido'),
 })
 
 export async function POST(request: NextRequest) {
@@ -25,9 +26,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { name, email, password } = result.data
+    const { name, email, password, inviteCode } = result.data
 
-    // Check if user already exists
+    // ─── Validate invite code ──────────────────────────────
+    const invite = await db.inviteCode.findUnique({
+      where: { code: inviteCode },
+    })
+
+    if (!invite) {
+      return NextResponse.json(
+        { error: 'Código de invitación inválido' },
+        { status: 400 }
+      )
+    }
+
+    if (invite.expiresAt && invite.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'El código de invitación ha expirado' },
+        { status: 400 }
+      )
+    }
+
+    if (invite.usedCount >= invite.maxUses) {
+      return NextResponse.json(
+        { error: 'El código de invitación ya fue usado el máximo de veces' },
+        { status: 400 }
+      )
+    }
+
+    // ─── Check if user already exists ──────────────────────
     const existingUser = await db.user.findUnique({ where: { email } })
     if (existingUser) {
       return NextResponse.json(
@@ -36,6 +63,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ─── Create user ───────────────────────────────────────
     const hashedPassword = await hashPassword(password)
 
     const user = await db.user.create({
@@ -44,6 +72,8 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         emailVerified: new Date(),
+        role: invite.role,
+        inviteCodeId: invite.id,
       },
       select: {
         id: true,
@@ -54,12 +84,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Increment invite usage
+    await db.inviteCode.update({
+      where: { id: invite.id },
+      data: { usedCount: { increment: 1 } },
+    })
+
     // Create audit log
     await db.auditLog.create({
       data: {
         userId: user.id,
         action: 'USER_REGISTERED',
-        details: `New user registered: ${email}`,
+        details: `New user registered: ${email} with role ${invite.role}`,
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       },
     })

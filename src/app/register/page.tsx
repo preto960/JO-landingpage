@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader2, Shield, UserPlus, Check, X } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Shield, UserPlus, Check, X, KeyRound } from 'lucide-react'
 
 const inputBase: React.CSSProperties = {
   fontFamily: "'Jost', sans-serif",
@@ -41,6 +41,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -61,7 +62,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, inviteCode }),
       })
       const data = await response.json()
       if (!response.ok) {
@@ -136,7 +137,10 @@ export default function RegisterPage() {
             </h1>
           </Link>
           <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.7rem', fontWeight: 400, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(245,240,232,.45)', marginTop: '.75rem' }}>
-            Crea tu cuenta de administrador
+            Crea tu cuenta
+          </p>
+          <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.75rem', color: 'rgba(201,168,76,.6)', marginTop: '.25rem' }}>
+            Se requiere código de invitación
           </p>
         </div>
 
@@ -163,6 +167,13 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
+
+            <div>
+              <label htmlFor="inviteCode" style={{ ...labelBase, color: '#C9A84C' }}>
+                <span className="flex items-center gap-1.5"><KeyRound style={{ width: '.75rem', height: '.75rem' }} /> Código de invitación</span>
+              </label>
+              <input id="inviteCode" type="text" placeholder="A1B2C3D4" value={inviteCode} onChange={(e) => setInviteCode(e.target.value.toUpperCase())} required disabled={loading} style={{ ...inputBase, opacity: loading ? 0.5 : 1, letterSpacing: '.15em' }} onFocus={handleFocus} onBlur={handleBlur} />
+            </div>
 
             <div>
               <label htmlFor="name" style={labelBase}>Nombre completo</label>
