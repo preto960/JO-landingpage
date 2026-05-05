@@ -184,15 +184,17 @@ export async function POST(request: Request) {
       ('perm_orders_delete', 'orders.delete', 'Eliminar Pedidos', 'orders', 'Eliminar pedidos'),
       ('perm_settings_view', 'settings.view', 'Ver Perfil', 'settings', 'Acceder al perfil propio'),
       ('perm_settings_edit', 'settings.edit', 'Editar Perfil', 'settings', 'Modificar datos del perfil'),
-      ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs de auditoría')`)
+      ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs de auditoría'),
+      ('perm_roles_view', 'roles.view', 'Ver Roles', 'roles', 'Ver lista de roles y permisos'),
+      ('perm_roles_manage', 'roles.manage', 'Gestionar Roles', 'roles', 'Crear, editar, eliminar roles y asignar permisos')`)
 
     // ─── 5. Role-permission mappings ────────────────────────
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_super_admin', id FROM permissions`)
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
-      SELECT 'role_admin', id FROM permissions WHERE name NOT IN ('users.delete')`)
+      SELECT 'role_admin', id FROM permissions WHERE name NOT IN ('users.delete', 'roles.manage')`)
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
-      SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'products.view', 'products.create', 'products.edit', 'orders.view', 'orders.create', 'orders.edit', 'settings.view', 'settings.edit')`)
+      SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'products.view', 'products.create', 'products.edit', 'orders.view', 'orders.create', 'orders.edit', 'settings.view', 'settings.edit', 'roles.view')`)
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_viewer', id FROM permissions WHERE name IN ('dashboard.view')`)
     log.push('Roles, permisos y asignaciones creados')

@@ -15,7 +15,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import {
   LayoutDashboard, Users, ShoppingCart, Settings,
-  LogOut, Menu, Bell, Home, ChevronRight, Package, Shield,
+  LogOut, Menu, Bell, Home, ChevronRight, Package, Shield, ShieldCheck,
 } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/rbac'
@@ -33,6 +33,7 @@ const allSidebarItems: SidebarItem[] = [
   { label: 'Sistemas', icon: Package, href: '/dashboard/products', permission: 'products.view' },
   { label: 'Pedidos', icon: ShoppingCart, href: '/dashboard/orders', permission: 'orders.view' },
   { label: 'Usuarios', icon: Shield, href: '/dashboard/users', permission: 'users.view' },
+  { label: 'Roles', icon: ShieldCheck, href: '/dashboard/roles', permission: 'roles.view' },
   { label: 'Mi Perfil', icon: Settings, href: '/dashboard/profile', permission: 'settings.view' },
 ]
 
@@ -100,6 +101,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/dashboard/products': 'Sistemas',
   '/dashboard/orders': 'Pedidos',
   '/dashboard/users': 'Usuarios',
+  '/dashboard/roles': 'Roles',
   '/dashboard/profile': 'Mi Perfil',
 }
 

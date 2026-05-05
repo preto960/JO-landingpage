@@ -20,6 +20,8 @@ export const PERM = {
   SETTINGS_VIEW: 'settings.view',
   SETTINGS_EDIT: 'settings.edit',
   AUDIT_VIEW: 'audit.view',
+  ROLES_VIEW: 'roles.view',
+  ROLES_MANAGE: 'roles.manage',
 } as const
 
 export type PermissionName = (typeof PERM)[keyof typeof PERM]
@@ -37,6 +39,7 @@ export const ROLE_COLORS: Record<string, string> = {
   admin: '#E8C97A',
   editor: '#C9A84C',
   viewer: 'rgba(245,240,232,.5)',
+  custom: '#60a5fa',
 }
 
 // ─── Order status labels ────────────────────────────────
