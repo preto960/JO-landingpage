@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { Suspense, useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { signIn, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2, Shield, LogIn } from 'lucide-react'
 
@@ -37,8 +37,26 @@ const labelBase: React.CSSProperties = {
 
 function LoginForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const { data: session, status } = useSession()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
   const registered = searchParams.get('registered') === 'true'
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      router.push(callbackUrl)
+    }
+  }, [status, session, callbackUrl, router])
+
+  // Show loading while checking session
+  if (status === 'loading') {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0A' }}>
+        <div style={{ width: '1.5rem', height: '1.5rem', border: '1px solid rgba(201,168,76,.2)', borderTopColor: '#C9A84C', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      </div>
+    )
+  }
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
