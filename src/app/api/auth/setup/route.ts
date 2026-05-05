@@ -53,13 +53,13 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         emailVerified: new Date(),
-        role: 'super_admin',
+        roleId: 'role_super_admin',
       },
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
+        role: { select: { name: true, label: true } },
       },
     })
 

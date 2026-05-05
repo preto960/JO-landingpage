@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials'
 import { db, verifyPassword } from '@/lib/db'
 import { getUserPermissions } from '@/lib/rbac'
 
+// RBAC v2: uses rolePermissions relation (Role -> RolePermission -> Permission)
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
