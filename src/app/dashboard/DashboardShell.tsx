@@ -10,13 +10,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import {
-  LayoutDashboard, Users, ShoppingCart, BarChart3, Settings,
-  LogOut, Menu, Bell, Home, ChevronRight, Store, Shield,
+  LayoutDashboard, Users, ShoppingCart, Settings,
+  LogOut, Menu, Bell, Home, ChevronRight, Package, Shield,
 } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/rbac'
@@ -30,16 +29,16 @@ type SidebarItem = {
 }
 
 const allSidebarItems: SidebarItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard.view' },
-  { label: 'Productos', icon: ShoppingCart, href: '/dashboard', disabled: true },
-  { label: 'Pedidos', icon: Store, href: '/dashboard', disabled: true },
+  { label: 'Panel', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard.view' },
+  { label: 'Sistemas', icon: Package, href: '/dashboard/products', permission: 'products.view' },
+  { label: 'Pedidos', icon: ShoppingCart, href: '/dashboard/orders', permission: 'orders.view' },
   { label: 'Usuarios', icon: Shield, href: '/dashboard/users', permission: 'users.view' },
-  { label: 'Configuración', icon: Settings, href: '/dashboard/settings', permission: 'settings.view' },
+  { label: 'Mi Perfil', icon: Settings, href: '/dashboard/profile', permission: 'settings.view' },
 ]
 
 function getVisibleItems(permissions: string[]): SidebarItem[] {
   return allSidebarItems.filter(item => {
-    if (item.disabled) return true // show disabled items
+    if (item.disabled) return true
     if (item.permission) return permissions.includes(item.permission)
     return true
   })
@@ -96,6 +95,14 @@ function NavItem({ item, isActive, pathname, onNavigate }: {
   )
 }
 
+const PAGE_LABELS: Record<string, string> = {
+  '/dashboard': 'Panel',
+  '/dashboard/products': 'Sistemas',
+  '/dashboard/orders': 'Pedidos',
+  '/dashboard/users': 'Usuarios',
+  '/dashboard/profile': 'Mi Perfil',
+}
+
 export default function DashboardShell({
   user,
   children,
@@ -108,6 +115,8 @@ export default function DashboardShell({
   const permissions = user?.permissions || []
 
   const visibleItems = getVisibleItems(permissions)
+
+  const currentPageLabel = PAGE_LABELS[pathname] || pathname.split('/').pop()?.charAt(0).toUpperCase() + pathname.split('/').pop()?.slice(1)
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0A0A0A' }}>
@@ -175,15 +184,11 @@ export default function DashboardShell({
               </Link>
               <ChevronRight className="w-3 h-3" style={{ color: 'rgba(245,240,232,.15)' }} />
               <span style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.6)', fontSize: '.85rem' }}>
-                {pathname === '/dashboard' ? 'Dashboard' : pathname.split('/').pop()?.charAt(0).toUpperCase() + pathname.split('/').pop()?.slice(1)}
+                {currentPageLabel}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative p-2 transition-colors duration-200" style={{ color: 'rgba(245,240,232,.35)' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.6)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.35)')}>
-              <Bell className="w-5 h-5" style={{ strokeWidth: 1.5 }} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2" style={{ background: '#C9A84C', borderRadius: '50%' }} />
-            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 h-9 px-2" style={{ color: 'rgba(245,240,232,.6)' }}>
@@ -205,9 +210,9 @@ export default function DashboardShell({
                 <div className="my-1" style={{ height: '1px', background: 'rgba(245,240,232,.06)' }} />
                 <PermissionGate permission="settings.view">
                   <DropdownMenuItem asChild className="cursor-pointer p-2.5">
-                    <Link href="/dashboard/settings" className="flex items-center gap-2 text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)', letterSpacing: '.05em' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#F5F0E8')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.5)')}>
+                    <Link href="/dashboard/profile" className="flex items-center gap-2 text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)', letterSpacing: '.05em' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#F5F0E8')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.5)')}>
                       <Settings className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
-                      Configuración
+                      Mi Perfil
                     </Link>
                   </DropdownMenuItem>
                 </PermissionGate>

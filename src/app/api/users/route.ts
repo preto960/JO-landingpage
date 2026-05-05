@@ -1,8 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, getClientIp, createAuditLog } from '@/lib/api-auth'
-import { db } from '@/lib/db'
+import { db, hashPassword } from '@/lib/db'
+import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 
+const createUserSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  password: z.string().min(8),
+  roleId: z.string().optional(),
+})
+
+// POST /api/users — Create a new user (admin action)
+export async function POST(request: NextRequest) {
+  const auth = await requireAuth({ permission: 'users.create' })
+  if (!auth.success) return auth.response
+
+  try {
+    const body = await request.json()
+    const result = createUserSchema.safeParse(body)
+    if (!result.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: result.error.flatten().fieldErrors }, { status: 400 })
+    }
+
+    const { name, email, password, roleId } = result.data
+
+    const existing = await db.user.findUnique({ where: { email } })
+    if (existing) {
+      return NextResponse.json({ error: 'Ya existe un usuario con ese email' }, { status: 409 })
+    }
+
+    const hashed = await hashPassword(password)
+    const user = await db.user.create({
+      data: {
+        name,
+        email,
+        password: hashed,
+        emailVerified: new Date(),
+        roleId: roleId || 'role_viewer',
+      },
+      select: {
+        id: true, name: true, email: true, isActive: true, createdAt: true,
+        role: { select: { name: true, label: true } },
+      },
+    })
+
+    await createAuditLog({
+      userId: auth.user.id,
+      action: 'USER_CREATED',
+      details: `Usuario creado: ${email} con rol ${roleId || 'viewer'}`,
+      ipAddress: getClientIp(request),
+    })
+
+    return NextResponse.json({ user }, { status: 201 })
+  } catch (error: any) {
+    console.error('Create user error:', error)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+  }
+}
+
+// GET /api/users — List users
 export async function GET(request: NextRequest) {
   const auth = await requireAuth({ permission: 'users.view' })
   if (!auth.success) return auth.response

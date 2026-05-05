@@ -5,12 +5,18 @@ export const PERM = {
   DASHBOARD_VIEW: 'dashboard.view',
   USERS_VIEW: 'users.view',
   USERS_CREATE: 'users.create',
+  USERS_EDIT: 'users.edit',
   USERS_EDIT_ROLE: 'users.edit_role',
   USERS_ACTIVATE: 'users.activate',
   USERS_DELETE: 'users.delete',
-  INVITES_VIEW: 'invites.view',
-  INVITES_CREATE: 'invites.create',
-  INVITES_DELETE: 'invites.delete',
+  PRODUCTS_VIEW: 'products.view',
+  PRODUCTS_CREATE: 'products.create',
+  PRODUCTS_EDIT: 'products.edit',
+  PRODUCTS_DELETE: 'products.delete',
+  ORDERS_VIEW: 'orders.view',
+  ORDERS_CREATE: 'orders.create',
+  ORDERS_EDIT: 'orders.edit',
+  ORDERS_DELETE: 'orders.delete',
   SETTINGS_VIEW: 'settings.view',
   SETTINGS_EDIT: 'settings.edit',
   AUDIT_VIEW: 'audit.view',
@@ -31,6 +37,21 @@ export const ROLE_COLORS: Record<string, string> = {
   admin: '#E8C97A',
   editor: '#C9A84C',
   viewer: 'rgba(245,240,232,.5)',
+}
+
+// ─── Order status labels ────────────────────────────────
+export const ORDER_STATUS_LABELS: Record<string, string> = {
+  pendiente: 'Pendiente',
+  en_proceso: 'En Proceso',
+  completado: 'Completado',
+  cancelado: 'Cancelado',
+}
+
+export const ORDER_STATUS_COLORS: Record<string, string> = {
+  pendiente: '#fb923c',
+  en_proceso: '#60a5fa',
+  completado: '#22c55e',
+  cancelado: '#f87171',
 }
 
 // ─── Server-side helpers ────────────────────────────────

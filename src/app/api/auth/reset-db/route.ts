@@ -38,6 +38,8 @@ export async function POST(request: Request) {
     const log: string[] = []
 
     // ─── 1. DROP ALL TABLES (with CASCADE) ──────────────────
+    await exec(`DROP TABLE IF EXISTS orders CASCADE`)
+    await exec(`DROP TABLE IF EXISTS products CASCADE`)
     await exec(`DROP TABLE IF EXISTS role_permissions CASCADE`)
     await exec(`DROP TABLE IF EXISTS audit_logs CASCADE`)
     await exec(`DROP TABLE IF EXISTS invite_codes CASCADE`)
@@ -57,9 +59,11 @@ export async function POST(request: Request) {
     await exec(`DROP TABLE IF EXISTS "RolePermission" CASCADE`)
     await exec(`DROP TABLE IF EXISTS "Permission" CASCADE`)
     await exec(`DROP TABLE IF EXISTS "Role" CASCADE`)
+    await exec(`DROP TABLE IF EXISTS "Product" CASCADE`)
+    await exec(`DROP TABLE IF EXISTS "Order" CASCADE`)
     // Drop old enum types
     await exec(`DROP TYPE IF EXISTS "Role" CASCADE`)
-    log.push('All tables dropped')
+    log.push('Todas las tablas eliminadas')
 
     // ─── 2. CREATE TABLES (all snake_case) ───────────────────
     await exec(`CREATE TABLE roles (
@@ -93,7 +97,6 @@ export async function POST(request: Request) {
       image TEXT,
       is_active BOOLEAN NOT NULL DEFAULT true,
       last_login TIMESTAMP,
-      invite_code_id TEXT UNIQUE,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )`)
@@ -132,27 +135,34 @@ export async function POST(request: Request) {
       ip_address TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     )`)
-    await exec(`CREATE TABLE invite_codes (
+    await exec(`CREATE TABLE products (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      code TEXT UNIQUE NOT NULL,
-      role_id TEXT NOT NULL REFERENCES roles(id),
-      max_uses INT DEFAULT 1,
-      used_count INT DEFAULT 0,
-      expires_at TIMESTAMP,
+      name TEXT NOT NULL,
+      description TEXT,
+      price NUMERIC(12,2) NOT NULL DEFAULT 0,
+      features TEXT[] DEFAULT '{}',
+      is_active BOOLEAN NOT NULL DEFAULT true,
       created_at TIMESTAMP DEFAULT NOW(),
-      created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      used_by TEXT REFERENCES users(id) ON DELETE SET NULL
+      updated_at TIMESTAMP DEFAULT NOW()
     )`)
-    // Add deferred FK (users.invite_code_id -> invite_codes.id)
-    await exec(`ALTER TABLE users ADD CONSTRAINT users_invite_code_id_fkey
-      FOREIGN KEY (invite_code_id) REFERENCES invite_codes(id) ON DELETE SET NULL`)
-    log.push('All tables created fresh with snake_case columns')
+    await exec(`CREATE TABLE orders (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      customer_name TEXT NOT NULL,
+      customer_email TEXT NOT NULL,
+      customer_phone TEXT,
+      status TEXT NOT NULL DEFAULT 'pendiente',
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`)
+    log.push('Todas las tablas creadas con snake_case')
 
     // ─── 3. Seed roles ──────────────────────────────────────
     await exec(`INSERT INTO roles (id, name, label, description) VALUES
       ('role_super_admin', 'super_admin', 'Super Administrador', 'Acceso total al sistema'),
-      ('role_admin', 'admin', 'Administrador', 'Gestión de usuarios e invitaciones'),
-      ('role_editor', 'editor', 'Editor', 'Acceso a configuración básica'),
+      ('role_admin', 'admin', 'Administrador', 'Gestión completa del sistema'),
+      ('role_editor', 'editor', 'Editor', 'Gestión de productos y pedidos'),
       ('role_viewer', 'viewer', 'Observador', 'Solo lectura del dashboard')`)
 
     // ─── 4. Seed permissions ────────────────────────────────
@@ -160,15 +170,21 @@ export async function POST(request: Request) {
       ('perm_dashboard_view', 'dashboard.view', 'Ver Dashboard', 'dashboard', 'Acceder al dashboard principal'),
       ('perm_users_view', 'users.view', 'Ver Usuarios', 'users', 'Ver lista de usuarios'),
       ('perm_users_create', 'users.create', 'Crear Usuarios', 'users', 'Crear nuevos usuarios'),
+      ('perm_users_edit', 'users.edit', 'Editar Usuarios', 'users', 'Editar datos de usuarios'),
       ('perm_users_edit_role', 'users.edit_role', 'Cambiar Roles', 'users', 'Modificar el rol de un usuario'),
       ('perm_users_activate', 'users.activate', 'Activar/Desactivar', 'users', 'Activar o desactivar cuentas'),
       ('perm_users_delete', 'users.delete', 'Eliminar Usuarios', 'users', 'Eliminar cuentas de usuario'),
-      ('perm_invites_view', 'invites.view', 'Ver Invitaciones', 'invites', 'Ver códigos de invitación'),
-      ('perm_invites_create', 'invites.create', 'Crear Invitaciones', 'invites', 'Generar nuevos códigos'),
-      ('perm_invites_delete', 'invites.delete', 'Eliminar Invitaciones', 'invites', 'Eliminar códigos'),
-      ('perm_settings_view', 'settings.view', 'Ver Configuración', 'settings', 'Acceder a configuración'),
-      ('perm_settings_edit', 'settings.edit', 'Editar Configuración', 'settings', 'Modificar configuración'),
-      ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs')`)
+      ('perm_products_view', 'products.view', 'Ver Productos', 'products', 'Ver lista de productos/sistemas'),
+      ('perm_products_create', 'products.create', 'Crear Productos', 'products', 'Crear nuevos productos/sistemas'),
+      ('perm_products_edit', 'products.edit', 'Editar Productos', 'products', 'Modificar productos/sistemas'),
+      ('perm_products_delete', 'products.delete', 'Eliminar Productos', 'products', 'Eliminar productos/sistemas'),
+      ('perm_orders_view', 'orders.view', 'Ver Pedidos', 'orders', 'Ver lista de pedidos'),
+      ('perm_orders_create', 'orders.create', 'Crear Pedidos', 'orders', 'Registrar nuevos pedidos'),
+      ('perm_orders_edit', 'orders.edit', 'Editar Pedidos', 'orders', 'Modificar estado y datos de pedidos'),
+      ('perm_orders_delete', 'orders.delete', 'Eliminar Pedidos', 'orders', 'Eliminar pedidos'),
+      ('perm_settings_view', 'settings.view', 'Ver Perfil', 'settings', 'Acceder al perfil propio'),
+      ('perm_settings_edit', 'settings.edit', 'Editar Perfil', 'settings', 'Modificar datos del perfil'),
+      ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs de auditoría')`)
 
     // ─── 5. Role-permission mappings ────────────────────────
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
@@ -176,10 +192,10 @@ export async function POST(request: Request) {
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_admin', id FROM permissions WHERE name NOT IN ('users.delete')`)
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
-      SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'settings.view', 'settings.edit')`)
+      SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'products.view', 'products.create', 'products.edit', 'orders.view', 'orders.create', 'orders.edit', 'settings.view', 'settings.edit')`)
     await exec(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_viewer', id FROM permissions WHERE name IN ('dashboard.view')`)
-    log.push('Roles, permissions and mappings seeded')
+    log.push('Roles, permisos y asignaciones creados')
 
     // ─── 6. Create super_admin user ─────────────────────────
     const bcrypt = await import('bcryptjs')
@@ -187,7 +203,7 @@ export async function POST(request: Request) {
 
     await exec(`INSERT INTO users (name, email, password, email_verified, role_id, is_active) VALUES
       ('${name.replace(/'/g, "''")}', '${email}', '${hashedPassword}', NOW(), 'role_super_admin', true)`)
-    log.push(`Super admin created: ${email}`)
+    log.push(`Super administrador creado: ${email}`)
 
     // ─── 7. Verify ──────────────────────────────────────────
     const tables = await query(`

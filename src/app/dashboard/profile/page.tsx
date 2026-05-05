@@ -40,7 +40,7 @@ const cardStyle: React.CSSProperties = {
   padding: '1.5rem',
 }
 
-export default function SettingsPage() {
+export default function ProfilePage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('')
@@ -149,8 +149,8 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-5 sm:gap-8" style={{ maxWidth: '42rem' }}>
       {/* Header */}
       <div>
-        <h1 className="text-[1.5rem] sm:text-[1.875rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: '#F5F0E8', margin: 0 }}>Configuración</h1>
-        <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: 'rgba(245,240,232,.4)', marginTop: '.5rem' }}>Gestiona tu cuenta y preferencias</p>
+        <h1 className="text-[1.5rem] sm:text-[1.875rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: '#F5F0E8', margin: 0 }}>Mi <span style={{ color: '#C9A84C' }}>Perfil</span></h1>
+        <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: 'rgba(245,240,232,.4)', marginTop: '.5rem' }}>Gestiona tu información personal</p>
       </div>
 
       {/* Gold divider */}

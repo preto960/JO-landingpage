@@ -105,10 +105,10 @@ export default function DashboardContent({
             <div className="mt-5 sm:mt-8 p-3.5 sm:p-6" style={{ background: 'rgba(201,168,76,.03)', border: '1px solid rgba(201,168,76,.1)' }}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <h3 className="text-[.95rem] sm:text-[1rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: '#F5F0E8', margin: 0 }}>¿Empezamos a configurar?</h3>
-                  <p className="text-[.75rem] sm:text-[.8rem]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.35)', marginTop: '.25rem', lineHeight: 1.6 }}>Agrega tu primer contenido y personaliza tu landing page.</p>
+                  <h3 className="text-[.95rem] sm:text-[1rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: '#F5F0E8', margin: 0 }}>¿Comenzamos?</h3>
+                  <p className="text-[.75rem] sm:text-[.8rem]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.35)', marginTop: '.25rem', lineHeight: 1.6 }}>Agrega tus sistemas y gestiona los pedidos de tus clientes.</p>
                 </div>
-                <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={{ ...btnGold, whiteSpace: 'nowrap' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#E8C97A')} onMouseLeave={(e) => (e.currentTarget.style.background = '#C9A84C')}>
+                <Link href="/dashboard/products" className="w-full sm:w-auto text-center" style={{ ...btnGold, whiteSpace: 'nowrap' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#E8C97A')} onMouseLeave={(e) => (e.currentTarget.style.background = '#C9A84C')}>
                   Comenzar
                 </Link>
               </div>
@@ -122,10 +122,10 @@ export default function DashboardContent({
           <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.7rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(245,240,232,.25)', marginBottom: '1.25rem' }}>Configuración inicial</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
             {[
-              { label: 'Agregar Producto', icon: Package, desc: 'Sube tu primer producto', disabled: true },
+              { label: 'Agregar Sistema', icon: Package, desc: 'Registra tu primer sistema', href: '/dashboard/products', permission: 'products.create' as string },
               { label: 'Ver Landing', icon: TrendingUp, desc: 'Preview en vivo', href: '/' },
-              { label: 'Configurar Pagos', icon: DollarSign, desc: 'Métodos de pago', disabled: true },
-              { label: 'Mi Perfil', icon: Users, desc: 'Editar información', href: '/dashboard/settings', permission: 'settings.view' as string },
+              { label: 'Ver Pedidos', icon: ShoppingCart, desc: 'Consulta los pedidos', href: '/dashboard/orders', permission: 'orders.view' as string },
+              { label: 'Mi Perfil', icon: Users, desc: 'Editar información', href: '/dashboard/profile', permission: 'settings.view' as string },
             ].map((action, i) => {
               const Icon = action.icon
               const hasPermission = !action.permission || (user?.permissions || []).includes(action.permission)
@@ -167,7 +167,7 @@ export default function DashboardContent({
             </div>
           </div>
           <PermissionGate permission="settings.view">
-            <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={btnOutline} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.4)'; e.currentTarget.style.color = '#C9A84C' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.12)'; e.currentTarget.style.color = 'rgba(245,240,232,.5)' }}>
+            <Link href="/dashboard/profile" className="w-full sm:w-auto text-center" style={btnOutline} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.4)'; e.currentTarget.style.color = '#C9A84C' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.12)'; e.currentTarget.style.color = 'rgba(245,240,232,.5)' }}>
               Editar Perfil
             </Link>
           </PermissionGate>
