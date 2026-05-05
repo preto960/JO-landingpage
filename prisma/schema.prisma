@@ -7,60 +7,99 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  viewer
-  editor
-  admin
-  super_admin
+// ─── RBAC Tables ──────────────────────────────────────────
+
+model Role {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  label           String
+  description     String?
+  rolePermissions RolePermission[]
+  users           User[]
+  invites         InviteCode[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@map("roles")
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified DateTime?
-  password      String
-  role          Role      @default(viewer)
-  image         String?
-  isActive      Boolean   @default(true)
-  lastLogin     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model Permission {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  label           String
+  module          String
+  description     String?
+  rolePermissions RolePermission[]
+  createdAt       DateTime        @default(now()) @map("created_at")
 
-  accounts   Account[]
-  sessions   Session[]
-  auditLogs  AuditLog[]
-  invitesCreated  InviteCode[] @relation("Creator")
-  inviteUsed      InviteCode?  @relation("UsedBy", fields: [inviteCodeId], references: [id])
-  inviteCodeId    String?  @unique
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ─── Auth Tables ──────────────────────────────────────────
+
+model User {
+  id             String        @id @default(cuid())
+  name           String
+  email          String        @unique
+  emailVerified  DateTime?     @map("email_verified")
+  password       String
+  role           Role          @relation(fields: [roleId], references: [id])
+  roleId         String        @map("role_id")
+  image          String?
+  isActive       Boolean       @default(true) @map("is_active")
+  lastLogin      DateTime?     @map("last_login")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  accounts        Account[]
+  sessions        Session[]
+  auditLogs       AuditLog[]
+  invitesCreated  InviteCode[] @relation("InviteCreator")
+  inviteUsed      InviteCode?  @relation("InviteUsedBy", fields: [inviteCodeId], references: [id])
+  inviteCodeId    String?      @unique @map("invite_code_id")
+
+  @@map("users")
 }
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @map("user_id")
   type              String
   provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
+  providerAccountId String  @map("provider_account_id")
+  refreshToken      String? @map("refresh_token")
+  accessToken       String? @map("access_token")
+  expiresAt         Int?    @map("expires_at")
+  tokenType         String? @map("token_type")
   scope             String?
-  id_token          String?
-  session_state     String?
+  idToken           String? @map("id_token")
+  sessionState      String? @map("session_state")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -69,29 +108,34 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model AuditLog {
   id        String   @id @default(cuid())
-  userId    String?
+  userId    String?  @map("user_id")
   action    String
   details   String?
-  ipAddress String?
-  createdAt DateTime @default(now())
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
 }
 
 model InviteCode {
-  id         String   @id @default(cuid())
-  code       String   @unique
-  role       Role     @default(viewer)
-  maxUses    Int      @default(1)
-  usedCount  Int      @default(0)
-  expiresAt  DateTime?
-  createdAt  DateTime @default(now())
-  createdBy  String
-  usedBy     User?    @relation("UsedBy")
+  id        String    @id @default(cuid())
+  code      String    @unique
+  role      Role      @relation(fields: [roleId], references: [id])
+  roleId    String    @map("role_id")
+  maxUses   Int       @default(1) @map("max_uses")
+  usedCount Int       @default(0) @map("used_count")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String    @map("created_by")
+  usedBy    User?     @relation("InviteUsedBy")
+  creator   User      @relation("InviteCreator", fields: [createdBy], references: [id], onDelete: Cascade)
 
-  creator User @relation("Creator", fields: [createdBy], references: [id], onDelete: Cascade)
+  @@map("invite_codes")
 }

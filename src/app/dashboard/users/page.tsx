@@ -4,14 +4,10 @@ import UsersContent from './UsersContent'
 
 export default async function UsersPage() {
   const session = await auth()
+  if (!session?.user) redirect('/login')
 
-  if (!session?.user) {
-    redirect('/login')
-  }
-
-  if (session.user.role !== 'super_admin') {
-    redirect('/dashboard')
-  }
+  // Check permission server-side
+  if (!session.user.permissions.includes('users.view')) redirect('/dashboard')
 
   return <UsersContent user={session.user} />
 }

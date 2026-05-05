@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAuth({ minRole: 'admin' })
+  const auth = await requireAuth({ permission: 'users.view' })
   if (!auth.success) return auth.response
 
   const { searchParams } = new URL(request.url)
@@ -22,13 +22,8 @@ export async function GET(request: NextRequest) {
     ]
   }
 
-  if (roleFilter && ['viewer', 'editor', 'admin', 'super_admin'].includes(roleFilter)) {
-    where.role = roleFilter as any
-  }
-
-  // Non-super_admin can't see other super_admins
-  if (auth.dbUser.role !== 'super_admin') {
-    where.role = { not: 'super_admin' }
+  if (roleFilter) {
+    where.role = { name: roleFilter }
   }
 
   try {
@@ -39,14 +34,12 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           email: true,
-          role: true,
+          role: { select: { name: true, label: true } },
           image: true,
           isActive: true,
           lastLogin: true,
           createdAt: true,
-          _count: {
-            select: { auditLogs: true },
-          },
+          _count: { select: { auditLogs: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -57,12 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       users,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     })
   } catch (error) {
     console.error('List users error:', error)

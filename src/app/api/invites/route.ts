@@ -5,50 +5,28 @@ import { z } from 'zod'
 import crypto from 'crypto'
 
 const createInviteSchema = z.object({
-  role: z.enum(['viewer', 'editor', 'admin']),
+  roleId: z.string().min(1),
   maxUses: z.number().int().min(1).max(100).optional(),
   expiresInHours: z.number().int().min(1).max(720).optional(),
 })
 
-// Generate a readable invite code
 function generateInviteCode(): string {
-  const bytes = crypto.randomBytes(4)
-  return bytes.toString('hex').toUpperCase().slice(0, 8)
+  return crypto.randomBytes(4).toString('hex').toUpperCase().slice(0, 8)
 }
 
 export async function GET() {
-  const auth = await requireAuth({ minRole: 'admin' })
+  const auth = await requireAuth({ permission: 'invites.view' })
   if (!auth.success) return auth.response
 
   try {
     const invites = await db.inviteCode.findMany({
-      where: { createdBy: auth.dbUser.id },
       orderBy: { createdAt: 'desc' },
       include: {
-        creator: {
-          select: { name: true, email: true },
-        },
-        usedBy: {
-          select: { name: true, email: true },
-        },
+        creator: { select: { name: true, email: true } },
+        role: { select: { name: true, label: true } },
+        usedBy: { select: { name: true, email: true } },
       },
     })
-
-    // Only super_admin can see all invites
-    if (auth.dbUser.role === 'super_admin') {
-      const allInvites = await db.inviteCode.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: {
-          creator: {
-            select: { name: true, email: true },
-          },
-          usedBy: {
-            select: { name: true, email: true },
-          },
-        },
-      })
-      return NextResponse.json({ invites: allInvites })
-    }
 
     return NextResponse.json({ invites })
   } catch (error) {
@@ -58,46 +36,38 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth({ minRole: 'admin' })
+  const auth = await requireAuth({ permission: 'invites.create' })
   if (!auth.success) return auth.response
 
   try {
     const body = await request.json()
     const result = createInviteSchema.safeParse(body)
+    if (!result.success) return NextResponse.json({ error: 'Datos inválidos', details: result.error.flatten().fieldErrors }, { status: 400 })
 
-    if (!result.success) {
-      return NextResponse.json({ error: 'Datos inválidos', details: result.error.flatten().fieldErrors }, { status: 400 })
-    }
-
-    // Admin can only invite viewer/editor, not admin roles
-    if (auth.dbUser.role !== 'super_admin' && result.data.role === 'admin') {
-      return NextResponse.json({ error: 'Solo un super_admin puede invitar administradores' }, { status: 403 })
-    }
+    const role = await db.role.findUnique({ where: { id: result.data.roleId } })
+    if (!role) return NextResponse.json({ error: 'Rol no encontrado' }, { status: 404 })
 
     const code = generateInviteCode()
-    const expiresAt = result.data.expiresInHours
-      ? new Date(Date.now() + result.data.expiresInHours * 60 * 60 * 1000)
-      : null
+    const expiresAt = result.data.expiresInHours ? new Date(Date.now() + result.data.expiresInHours * 60 * 60 * 1000) : null
 
     const invite = await db.inviteCode.create({
       data: {
         code,
-        role: result.data.role,
+        roleId: result.data.roleId,
         maxUses: result.data.maxUses ?? 1,
         expiresAt,
-        createdBy: auth.dbUser.id,
+        createdBy: auth.user.id,
       },
       include: {
-        creator: {
-          select: { name: true, email: true },
-        },
+        creator: { select: { name: true, email: true } },
+        role: { select: { name: true, label: true } },
       },
     })
 
     await createAuditLog({
-      userId: auth.dbUser.id,
+      userId: auth.user.id,
       action: 'INVITE_CREATED',
-      details: `Created invite code ${code} for role ${result.data.role}`,
+      details: `Created invite code ${code} for role ${role.name}`,
       ipAddress: getClientIp(request),
     })
 
@@ -109,21 +79,18 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const auth = await requireAuth({ minRole: 'super_admin' })
+  const auth = await requireAuth({ permission: 'invites.delete' })
   if (!auth.success) return auth.response
 
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-
-    if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
-    }
+    if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
 
     await db.inviteCode.delete({ where: { id } })
 
     await createAuditLog({
-      userId: auth.dbUser.id,
+      userId: auth.user.id,
       action: 'INVITE_DELETED',
       details: `Deleted invite code ${id}`,
       ipAddress: getClientIp(request),

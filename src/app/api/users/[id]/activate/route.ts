@@ -6,17 +6,13 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAuth({ minRole: 'admin' })
+  const auth = await requireAuth({ permission: 'users.activate' })
   if (!auth.success) return auth.response
 
   const { id } = await params
 
-  // Can't deactivate self
-  if (id === auth.dbUser.id) {
-    return NextResponse.json(
-      { error: 'No puedes desactivar tu propia cuenta' },
-      { status: 400 }
-    )
+  if (id === auth.user.id) {
+    return NextResponse.json({ error: 'No puedes desactivar tu propia cuenta' }, { status: 400 })
   }
 
   try {
@@ -29,32 +25,22 @@ export async function PUT(
 
     const targetUser = await db.user.findUnique({
       where: { id },
-      select: { id: true, role: true, isActive: true, name: true, email: true },
+      select: { id: true, role: { select: { name: true } }, isActive: true, name: true, email: true },
     })
-
-    if (!targetUser) {
-      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
-    }
-
-    // Non-super_admin can't deactivate super_admin
-    if (auth.dbUser.role !== 'super_admin' && targetUser.role === 'super_admin') {
-      return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
-    }
+    if (!targetUser) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
 
     const updatedUser = await db.user.update({
       where: { id },
       data: { isActive },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
+        id: true, name: true, email: true,
+        role: { select: { name: true, label: true } },
         isActive: true,
       },
     })
 
     await createAuditLog({
-      userId: auth.dbUser.id,
+      userId: auth.user.id,
       action: isActive ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
       details: `${isActive ? 'Activated' : 'Deactivated'} user: ${targetUser.email}`,
       ipAddress: getClientIp(request),

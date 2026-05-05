@@ -1,103 +1,87 @@
-import { Role } from '@prisma/client'
+import { db } from '@/lib/db'
 
-// ─── Role hierarchy ───────────────────────────────────────
-// Higher number = more permissions
-const ROLE_HIERARCHY: Record<Role, number> = {
-  viewer: 1,
-  editor: 2,
-  admin: 3,
-  super_admin: 4,
-}
-
-// ─── Permissions ──────────────────────────────────────────
-export const PERMISSIONS = {
-  // Dashboard
-  dashboard_view: ['viewer', 'editor', 'admin', 'super_admin'] as Role[],
-
-  // Content
-  content_view: ['viewer', 'editor', 'admin', 'super_admin'] as Role[],
-  content_create: ['editor', 'admin', 'super_admin'] as Role[],
-  content_edit: ['editor', 'admin', 'super_admin'] as Role[],
-  content_delete: ['admin', 'super_admin'] as Role[],
-
-  // Users
-  users_view: ['admin', 'super_admin'] as Role[],
-  users_create: ['super_admin'] as Role[],
-  users_edit_role: ['super_admin'] as Role[],
-  users_deactivate: ['admin', 'super_admin'] as Role[],
-  users_delete: ['super_admin'] as Role[],
-
-  // Invites
-  invites_create: ['admin', 'super_admin'] as Role[],
-  invites_list: ['admin', 'super_admin'] as Role[],
-  invites_delete: ['super_admin'] as Role[],
-
-  // Settings
-  settings_view: ['admin', 'super_admin'] as Role[],
-  settings_edit: ['admin', 'super_admin'] as Role[],
-
-  // Stats
-  stats_view: ['viewer', 'editor', 'admin', 'super_admin'] as Role[],
+// ─── Permission names (single source of truth) ───────────
+export const PERM = {
+  DASHBOARD_VIEW: 'dashboard.view',
+  USERS_VIEW: 'users.view',
+  USERS_CREATE: 'users.create',
+  USERS_EDIT_ROLE: 'users.edit_role',
+  USERS_ACTIVATE: 'users.activate',
+  USERS_DELETE: 'users.delete',
+  INVITES_VIEW: 'invites.view',
+  INVITES_CREATE: 'invites.create',
+  INVITES_DELETE: 'invites.delete',
+  SETTINGS_VIEW: 'settings.view',
+  SETTINGS_EDIT: 'settings.edit',
+  AUDIT_VIEW: 'audit.view',
 } as const
 
-export type Permission = keyof typeof PERMISSIONS
+export type PermissionName = (typeof PERM)[keyof typeof PERM]
 
-// ─── Helpers ──────────────────────────────────────────────
-
-export function getRoleLevel(role: Role): number {
-  return ROLE_HIERARCHY[role] ?? 0
-}
-
-export function hasMinRole(userRole: Role, requiredRole: Role): boolean {
-  return getRoleLevel(userRole) >= getRoleLevel(requiredRole)
-}
-
-export function hasPermission(userRole: Role, permission: Permission): boolean {
-  return PERMISSIONS[permission].includes(userRole)
-}
-
-export function hasAnyPermission(userRole: Role, permissions: Permission[]): boolean {
-  return permissions.some((p) => hasPermission(userRole, p))
-}
-
-export function hasAllPermissions(userRole: Role, permissions: Permission[]): boolean {
-  return permissions.every((p) => hasPermission(userRole, p))
-}
-
-// ─── Role labels (Spanish) ────────────────────────────────
-
-export const ROLE_LABELS: Record<Role, string> = {
-  viewer: 'Observador',
-  editor: 'Editor',
-  admin: 'Administrador',
+// ─── Role labels ─────────────────────────────────────────
+export const ROLE_LABELS: Record<string, string> = {
   super_admin: 'Super Administrador',
+  admin: 'Administrador',
+  editor: 'Editor',
+  viewer: 'Observador',
 }
 
-export const ROLE_COLORS: Record<Role, string> = {
-  viewer: 'rgba(245,240,232,.5)',
-  editor: '#C9A84C',
-  admin: '#E8C97A',
+export const ROLE_COLORS: Record<string, string> = {
   super_admin: '#22c55e',
+  admin: '#E8C97A',
+  editor: '#C9A84C',
+  viewer: 'rgba(245,240,232,.5)',
 }
 
-// ─── Route-role map for middleware ─────────────────────────
+// ─── Server-side helpers ────────────────────────────────
 
-export const ROUTE_ROLES: Record<string, Role[]> = {
-  '/dashboard/users': ['super_admin'],
-  '/dashboard/settings': ['admin', 'super_admin'],
-  '/dashboard': ['viewer', 'editor', 'admin', 'super_admin'],
+/** Get all permission names for a user by their role_id */
+export async function getUserPermissions(roleId: string): Promise<string[]> {
+  const rolePerms = await db.rolePermission.findMany({
+    where: { roleId },
+    select: { permission: { select: { name: true } } },
+  })
+  return rolePerms.map(rp => rp.permission.name)
 }
 
-export function getRequiredRolesForPath(pathname: string): Role[] | null {
-  // Check exact matches first
-  if (ROUTE_ROLES[pathname]) return ROUTE_ROLES[pathname]
+/** Check if a role has a specific permission */
+export async function hasPermission(roleId: string, permission: string): Promise<boolean> {
+  const count = await db.rolePermission.count({
+    where: {
+      roleId,
+      permission: { name: permission },
+    },
+  })
+  return count > 0
+}
 
-  // Check prefix matches (longest first)
-  const sortedRoutes = Object.keys(ROUTE_ROLES).sort((a, b) => b.length - a.length)
-  for (const route of sortedRoutes) {
-    if (pathname.startsWith(route + '/')) return ROUTE_ROLES[route]
-    if (pathname === route) return ROUTE_ROLES[route]
-  }
+/** Check if a role has ANY of the given permissions */
+export async function hasAnyPermission(roleId: string, permissions: string[]): Promise<boolean> {
+  const count = await db.rolePermission.count({
+    where: {
+      roleId,
+      permission: { name: { in: permissions } },
+    },
+  })
+  return count > 0
+}
 
-  return null
+/** Check if a role has ALL of the given permissions */
+export async function hasAllPermissions(roleId: string, permissions: string[]): Promise<boolean> {
+  const count = await db.rolePermission.count({
+    where: {
+      roleId,
+      permission: { name: { in: permissions } },
+    },
+  })
+  return count === permissions.length
+}
+
+// ─── Sync permission check (uses cached array from JWT) ─
+export function checkPermission(permissions: string[], permission: string): boolean {
+  return permissions.includes(permission)
+}
+
+export function checkAnyPermission(permissions: string[], perms: string[]): boolean {
+  return perms.some(p => permissions.includes(p))
 }

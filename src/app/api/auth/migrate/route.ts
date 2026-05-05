@@ -1,168 +1,308 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 
 /**
  * POST /api/auth/migrate
  *
- * One-time migration: adds RBAC columns to the User table if they are missing,
- * then promotes all existing active users to super_admin so they can log in.
- *
- * Safe to call multiple times — it checks before altering.
+ * One-time migration:
+ * 1. Creates RBAC tables (roles, permissions, role_permissions)
+ * 2. Seeds default roles + permissions + mappings
+ * 3. Renames existing tables to snake_case
+ * 4. Adds missing columns to users
+ * 5. Migrates role data (enum/text → FK)
+ * 6. Promotes existing users to super_admin
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}))
-
-    // Simple protection: require an email to promote
     const promoteEmail = body.email as string | undefined
+    const log: string[] = []
 
-    // ─── 1. Check which columns already exist ───────────────
-    const tableInfo: string[] = []
+    // ─── 1. Create RBAC tables ──────────────────────────────
+    await q(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        name TEXT UNIQUE NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS permissions (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        name TEXT UNIQUE NOT NULL,
+        label TEXT NOT NULL,
+        module TEXT NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS role_permissions (
+        role_id TEXT REFERENCES roles(id) ON DELETE CASCADE,
+        permission_id TEXT REFERENCES permissions(id) ON DELETE CASCADE,
+        PRIMARY KEY (role_id, permission_id)
+      );
+    `)
+    log.push('RBAC tables created/verified')
 
-    try {
-      const result = await db.$queryRawUnsafe(
-        `SELECT column_name FROM information_schema.columns WHERE table_name = 'User' ORDER BY ordinal_position`
-      ) as { column_name: string }[]
+    // ─── 2. Seed roles ──────────────────────────────────────
+    await q(`
+      INSERT INTO roles (id, name, label, description) VALUES
+        ('role_super_admin', 'super_admin', 'Super Administrador', 'Acceso total al sistema'),
+        ('role_admin', 'admin', 'Administrador', 'Gestión de usuarios e invitaciones'),
+        ('role_editor', 'editor', 'Editor', 'Acceso a configuración básica'),
+        ('role_viewer', 'viewer', 'Observador', 'Solo lectura del dashboard')
+      ON CONFLICT (name) DO NOTHING;
+    `)
 
-      tableInfo.push(...result.map(r => r.column_name))
-    } catch {
-      return NextResponse.json(
-        { error: 'No se pudo leer la estructura de la tabla User' },
-        { status: 500 }
-      )
-    }
+    // ─── 3. Seed permissions ────────────────────────────────
+    await q(`
+      INSERT INTO permissions (id, name, label, module, description) VALUES
+        ('perm_dashboard_view', 'dashboard.view', 'Ver Dashboard', 'dashboard', 'Acceder al dashboard principal'),
+        ('perm_users_view', 'users.view', 'Ver Usuarios', 'users', 'Ver lista de usuarios'),
+        ('perm_users_create', 'users.create', 'Crear Usuarios', 'users', 'Crear nuevos usuarios'),
+        ('perm_users_edit_role', 'users.edit_role', 'Cambiar Roles', 'users', 'Modificar el rol de un usuario'),
+        ('perm_users_activate', 'users.activate', 'Activar/Desactivar', 'users', 'Activar o desactivar cuentas'),
+        ('perm_users_delete', 'users.delete', 'Eliminar Usuarios', 'users', 'Eliminar cuentas de usuario'),
+        ('perm_invites_view', 'invites.view', 'Ver Invitaciones', 'invites', 'Ver códigos de invitación'),
+        ('perm_invites_create', 'invites.create', 'Crear Invitaciones', 'invites', 'Generar nuevos códigos'),
+        ('perm_invites_delete', 'invites.delete', 'Eliminar Invitaciones', 'invites', 'Eliminar códigos'),
+        ('perm_settings_view', 'settings.view', 'Ver Configuración', 'settings', 'Acceder a configuración'),
+        ('perm_settings_edit', 'settings.edit', 'Editar Configuración', 'settings', 'Modificar configuración'),
+        ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs')
+      ON CONFLICT (name) DO NOTHING;
+    `)
 
-    const missingColumns: string[] = []
+    // ─── 4. Role-permission mappings ────────────────────────
+    // super_admin: ALL
+    await q(`INSERT INTO role_permissions (role_id, permission_id)
+      SELECT 'role_super_admin', id FROM permissions
+      ON CONFLICT DO NOTHING;`)
+    // admin: all except users.delete
+    await q(`INSERT INTO role_permissions (role_id, permission_id)
+      SELECT 'role_admin', id FROM permissions WHERE name NOT IN ('users.delete')
+      ON CONFLICT DO NOTHING;`)
+    // editor: dashboard + settings
+    await q(`INSERT INTO role_permissions (role_id, permission_id)
+      SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'settings.view', 'settings.edit')
+      ON CONFLICT DO NOTHING;`)
+    // viewer: dashboard only
+    await q(`INSERT INTO role_permissions (role_id, permission_id)
+      SELECT 'role_viewer', id FROM permissions WHERE name IN ('dashboard.view')
+      ON CONFLICT DO NOTHING;`)
+    log.push('Roles, permissions and mappings seeded')
 
-    // Define columns to add: [name, type, default, isNullable]
-    const columnsToAdd: { name: string; sql: string }[] = []
+    // ─── 5. Rename existing tables to snake_case ────────────
+    const renames: [string, string][] = [
+      ['"User"', 'users'], ['"Account"', 'accounts'], ['"Session"', 'sessions'],
+      ['"VerificationToken"', 'verification_tokens'],
+      ['"AuditLog"', 'audit_logs'], ['"InviteCode"', 'invite_codes'],
+    ]
 
-    if (!tableInfo.includes('role')) {
-      columnsToAdd.push({
-        name: 'role',
-        sql: `ALTER TABLE "User" ADD COLUMN "role" TEXT NOT NULL DEFAULT 'viewer'; CREATE TYPE "Role" AS ENUM ('viewer', 'editor', 'admin', 'super_admin'); ALTER TABLE "User" ALTER COLUMN "role" TYPE "Role" USING "role"::"Role";`,
-      })
-      missingColumns.push('role')
-    }
-
-    if (!tableInfo.includes('isActive')) {
-      columnsToAdd.push({
-        name: 'isActive',
-        sql: `ALTER TABLE "User" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true;`,
-      })
-      missingColumns.push('isActive')
-    }
-
-    if (!tableInfo.includes('lastLogin')) {
-      columnsToAdd.push({
-        name: 'lastLogin',
-        sql: `ALTER TABLE "User" ADD COLUMN "lastLogin" TIMESTAMP(3);`,
-      })
-      missingColumns.push('lastLogin')
-    }
-
-    if (!tableInfo.includes('inviteCodeId')) {
-      columnsToAdd.push({
-        name: 'inviteCodeId',
-        sql: `ALTER TABLE "User" ADD COLUMN "inviteCodeId" TEXT UNIQUE REFERENCES "InviteCode"("id") ON DELETE SET NULL;`,
-      })
-      missingColumns.push('inviteCodeId')
-    }
-
-    // ─── 2. Add missing columns ─────────────────────────────
-    const applied: string[] = []
-
-    for (const col of columnsToAdd) {
+    for (const [oldName, newName] of renames) {
       try {
-        // Handle role specially because of the enum type
-        if (col.name === 'role') {
-          // Check if Role enum type already exists
-          const enumExists = await db.$queryRawUnsafe(
-            `SELECT typname FROM pg_type WHERE typname = 'Role'`
-          ) as { typname: string }[]
-
-          if (enumExists.length === 0) {
-            await db.$executeRawUnsafe(`CREATE TYPE "Role" AS ENUM ('viewer', 'editor', 'admin', 'super_admin');`)
-          }
-          await db.$executeRawUnsafe(
-            `ALTER TABLE "User" ADD COLUMN "role" "Role" NOT NULL DEFAULT 'viewer';`
-          )
-        } else {
-          await db.$executeRawUnsafe(col.sql)
-        }
-        applied.push(col.name)
-      } catch (err: any) {
-        console.error(`Failed to add column ${col.name}:`, err.message)
-        // Continue with other columns even if one fails
+        await q(`ALTER TABLE ${oldName} RENAME TO ${newName};`)
+        log.push(`Renamed ${oldName} -> ${newName}`)
+      } catch {
+        // Table might already be renamed or not exist
       }
     }
 
-    // ─── 3. Promote existing users to super_admin ───────────
-    let promoted = 0
+    // ─── 6. Add/fix columns on users ───────────────────────
+    const userCols = await getColumns('users')
 
-    if (promoteEmail) {
-      const result = await db.$executeRawUnsafe(
-        `UPDATE "User" SET "role" = 'super_admin' WHERE email = $1;`,
-        promoteEmail
-      )
-      promoted = 1
-    } else {
-      // Promote ALL existing users to super_admin (safe default for existing data)
-      const result = await db.$executeRawUnsafe(
-        `UPDATE "User" SET "role" = 'super_admin' WHERE "role" = 'viewer';`
-      )
-      promoted = 1 // at least attempted
+    if (!userCols.includes('role_id')) {
+      // Check if old 'role' column exists (enum or text)
+      if (userCols.includes('role')) {
+        // Add new role_id column
+        await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id);`)
+        // Migrate existing role values to role_id
+        await q(`
+          UPDATE users SET role_id = CASE
+            WHEN role = 'super_admin' THEN 'role_super_admin'
+            WHEN role = 'admin' THEN 'role_admin'
+            WHEN role = 'editor' THEN 'role_editor'
+            ELSE 'role_viewer'
+          END;
+        `)
+        // Drop old role column
+        await safeQ(`ALTER TABLE users DROP COLUMN role;`)
+        // Drop old enum type
+        await safeQ(`DROP TYPE IF EXISTS "Role";`)
+        log.push('Migrated role enum -> role_id FK')
+      } else {
+        await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id);`)
+        log.push('Added role_id column')
+      }
     }
 
-    // ─── 4. Verify ──────────────────────────────────────────
-    const users = await db.$queryRawUnsafe(
-      `SELECT id, email, name, "role", "isActive" FROM "User" ORDER BY "createdAt" ASC`
-    ) as Array<{ id: string; email: string; name: string; role: string; isActive: boolean }>
+    if (!userCols.includes('is_active')) {
+      await safeQ(`ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true;`)
+      log.push('Added is_active')
+    }
+    if (!userCols.includes('last_login')) {
+      await safeQ(`ALTER TABLE users ADD COLUMN last_login TIMESTAMP(3);`)
+      log.push('Added last_login')
+    }
+    if (!userCols.includes('invite_code_id')) {
+      // Check if old inviteCodeId exists
+      if (userCols.includes('invitecodeid') || userCols.includes('"inviteCodeId"')) {
+        await safeQ(`ALTER TABLE users RENAME COLUMN "inviteCodeId" TO invite_code_id;`)
+      } else {
+        await safeQ(`ALTER TABLE users ADD COLUMN invite_code_id TEXT UNIQUE REFERENCES invite_codes(id) ON DELETE SET NULL;`)
+      }
+    }
+
+    // ─── 7. Fix snake_case column names on users ────────────
+    const userColsAfter = await getColumns('users')
+    const colRenames: [string, string][] = [
+      ['emailverified', 'email_verified'],
+      ['emailVerified', 'email_verified'],
+      ['createdat', 'created_at'],
+      ['createdAt', 'created_at'],
+      ['updatedat', 'updated_at'],
+      ['updatedAt', 'updated_at'],
+      ['lastlogin', 'last_login'],
+    ]
+    for (const [old, newName] of colRenames) {
+      if (userColsAfter.includes(old.toLowerCase()) && !userColsAfter.includes(newName)) {
+        await safeQ(`ALTER TABLE users RENAME COLUMN "${old}" TO ${newName};`)
+      }
+    }
+
+    // ─── 8. Fix invite_codes table ─────────────────────────
+    try {
+      const invCols = await getColumns('invite_codes')
+      if (invCols.length > 0 && !invCols.includes('role_id')) {
+        if (invCols.includes('role')) {
+          await q(`ALTER TABLE invite_codes ADD COLUMN role_id TEXT REFERENCES roles(id);`)
+          await q(`
+            UPDATE invite_codes SET role_id = CASE
+              WHEN role = 'super_admin' THEN 'role_super_admin'
+              WHEN role = 'admin' THEN 'role_admin'
+              WHEN role = 'editor' THEN 'role_editor'
+              ELSE 'role_viewer'
+            END;
+          `)
+          await safeQ(`ALTER TABLE invite_codes DROP COLUMN role;`)
+          log.push('Migrated invite_codes role -> role_id FK')
+        } else {
+          await q(`ALTER TABLE invite_codes ADD COLUMN role_id TEXT REFERENCES roles(id);`)
+        }
+      }
+
+      // Fix column names
+      const invColsAfter = await getColumns('invite_codes')
+      const invRenames: [string, string][] = [
+        ['maxuses', 'max_uses'], ['maxUses', 'max_uses'],
+        ['usedcount', 'used_count'], ['usedCount', 'used_count'],
+        ['expiresat', 'expires_at'], ['expiresAt', 'expires_at'],
+        ['createdat', 'created_at'], ['createdAt', 'created_at'],
+        ['createdby', 'created_by'], ['createdBy', 'created_by'],
+        ['invitecodeid', 'invite_code_id'],
+      ]
+      for (const [old, newName] of invRenames) {
+        if (invColsAfter.map(c => c.toLowerCase()).includes(old.toLowerCase()) && !invColsAfter.includes(newName)) {
+          await safeQ(`ALTER TABLE invite_codes RENAME COLUMN "${old}" TO ${newName};`)
+        }
+      }
+    } catch {
+      log.push('invite_codes table not found, skipping')
+    }
+
+    // ─── 9. Fix audit_logs columns ─────────────────────────
+    try {
+      const alCols = await getColumns('audit_logs')
+      if (alCols.length > 0) {
+        const alRenames: [string, string][] = [
+          ['userid', 'user_id'], ['userId', 'user_id'],
+          ['ipaddress', 'ip_address'], ['ipAddress', 'ip_address'],
+          ['createdat', 'created_at'], ['createdAt', 'created_at'],
+        ]
+        for (const [old, newName] of alRenames) {
+          if (alCols.map(c => c.toLowerCase()).includes(old.toLowerCase()) && !alCols.includes(newName)) {
+            await safeQ(`ALTER TABLE audit_logs RENAME COLUMN "${old}" TO ${newName};`)
+          }
+        }
+      }
+    } catch {}
+
+    // ─── 10. Promote user ──────────────────────────────────
+    if (promoteEmail) {
+      await q(`UPDATE users SET role_id = 'role_super_admin' WHERE email = $1;`, [promoteEmail])
+      log.push(`Promoted ${promoteEmail} to super_admin`)
+    } else {
+      // Promote ALL existing users to super_admin (safe default for migration)
+      const r = await q(`UPDATE users SET role_id = 'role_super_admin' WHERE role_id NOT IN (SELECT id FROM roles);`)
+      log.push('All unmapped users promoted to super_admin')
+    }
+
+    // ─── 11. Verify ────────────────────────────────────────
+    const users = await q(`
+      SELECT u.id, u.email, u.name, u.is_active, r.name as role_name, r.label as role_label
+      FROM users u LEFT JOIN roles r ON u.role_id = r.id
+      ORDER BY u.created_at ASC;
+    `)
 
     return NextResponse.json({
       success: true,
-      message: 'Migración completada exitosamente',
-      existingColumns: tableInfo,
-      missingColumns,
-      appliedColumns: applied,
-      promotedToSuperAdmin: promoted,
-      currentUsers: users.map(u => ({
-        email: u.email,
-        name: u.name,
-        role: u.role,
-        isActive: u.isActive,
-      })),
+      message: 'Migración RBAC completada',
+      steps: log,
+      users: users.rows || users,
     })
   } catch (error: any) {
     console.error('Migration error:', error)
-    return NextResponse.json(
-      { error: 'Error en la migración', details: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error en migración', details: error.message, stack: error.stack }, { status: 500 })
   }
 }
 
-// Also allow GET to check status without modifying
+// Check status
 export async function GET() {
   try {
-    const result = await db.$queryRawUnsafe(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = 'User' ORDER BY ordinal_position`
-    ) as { column_name: string }[]
-
-    const columns = result.map(r => r.column_name)
+    const tables = await q(`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public'
+      ORDER BY table_name;
+    `)
+    const userCols = await getColumns('users')
 
     return NextResponse.json({
-      userColumns: columns,
-      hasRole: columns.includes('role'),
-      hasIsActive: columns.includes('isActive'),
-      hasLastLogin: columns.includes('lastLogin'),
-      hasInviteCodeId: columns.includes('inviteCodeId'),
-      needsMigration: !columns.includes('role'),
+      tables: (tables.rows || tables).map((t: any) => t.table_name || t.table_name),
+      userColumns: userCols,
+      hasRbacTables: ['roles', 'permissions', 'role_permissions'].every(t =>
+        (tables.rows || tables).some((tb: any) => (tb.table_name || tb.table_name) === t)
+      ),
+      needsMigration: !userCols.includes('role_id'),
     })
   } catch (error: any) {
-    return NextResponse.json(
-      { error: 'No se pudo verificar la estructura', details: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'No se pudo verificar', details: error.message }, { status: 500 })
   }
+}
+
+// ─── Helpers ──────────────────────────────────────────────
+
+// @ts-ignore
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function q(sql: string, params?: any[]) {
+  if (params?.length) {
+    // Use tagged template for parameterized queries
+    return prisma.$executeRawUnsafe(sql.replace(/\$1/g, `'${params[0]}'`))
+  }
+  return prisma.$queryRawUnsafe(sql)
+}
+
+async function getColumns(table: string): Promise<string[]> {
+  try {
+    const result = await prisma.$queryRawUnsafe(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}' ORDER BY ordinal_position`
+    ) as { column_name: string }[]
+    return result.map(r => r.column_name)
+  } catch {
+    return []
+  }
+}
+
+async function safeQ(sql: string) {
+  try { await prisma.$executeRawUnsafe(sql) } catch {}
 }

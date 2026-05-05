@@ -17,101 +17,52 @@ const registerSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
     const result = registerSchema.safeParse(body)
     if (!result.success) {
-      return NextResponse.json(
-        { error: 'Datos inválidos', details: result.error.flatten().fieldErrors },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Datos inválidos', details: result.error.flatten().fieldErrors }, { status: 400 })
     }
 
     const { name, email, password, inviteCode } = result.data
 
-    // ─── Validate invite code ──────────────────────────────
-    const invite = await db.inviteCode.findUnique({
-      where: { code: inviteCode },
-    })
+    // Validate invite code
+    const invite = await db.inviteCode.findUnique({ where: { code: inviteCode } })
+    if (!invite) return NextResponse.json({ error: 'Código de invitación inválido' }, { status: 400 })
+    if (invite.expiresAt && invite.expiresAt < new Date()) return NextResponse.json({ error: 'El código de invitación ha expirado' }, { status: 400 })
+    if (invite.usedCount >= invite.maxUses) return NextResponse.json({ error: 'El código de invitación ya fue usado el máximo de veces' }, { status: 400 })
 
-    if (!invite) {
-      return NextResponse.json(
-        { error: 'Código de invitación inválido' },
-        { status: 400 }
-      )
-    }
-
-    if (invite.expiresAt && invite.expiresAt < new Date()) {
-      return NextResponse.json(
-        { error: 'El código de invitación ha expirado' },
-        { status: 400 }
-      )
-    }
-
-    if (invite.usedCount >= invite.maxUses) {
-      return NextResponse.json(
-        { error: 'El código de invitación ya fue usado el máximo de veces' },
-        { status: 400 }
-      )
-    }
-
-    // ─── Check if user already exists ──────────────────────
+    // Check if user already exists
     const existingUser = await db.user.findUnique({ where: { email } })
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Ya existe una cuenta con este email' },
-        { status: 409 }
-      )
-    }
+    if (existingUser) return NextResponse.json({ error: 'Ya existe una cuenta con este email' }, { status: 409 })
 
-    // ─── Create user ───────────────────────────────────────
     const hashedPassword = await hashPassword(password)
 
     const user = await db.user.create({
       data: {
-        name,
-        email,
-        password: hashedPassword,
+        name, email, password: hashedPassword,
         emailVerified: new Date(),
-        role: invite.role,
+        roleId: invite.roleId,
         inviteCodeId: invite.id,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
+      select: { id: true, name: true, email: true, createdAt: true, role: { select: { name: true, label: true } } },
     })
 
-    // Increment invite usage
     await db.inviteCode.update({
       where: { id: invite.id },
       data: { usedCount: { increment: 1 } },
     })
 
-    // Create audit log
     await db.auditLog.create({
       data: {
         userId: user.id,
         action: 'USER_REGISTERED',
-        details: `New user registered: ${email} with role ${invite.role}`,
+        details: `New user registered: ${email} with role ${invite.roleId}`,
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       },
     })
 
-    return NextResponse.json(
-      {
-        message: 'Cuenta creada exitosamente',
-        user,
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({ message: 'Cuenta creada exitosamente', user }, { status: 201 })
   } catch (error: any) {
     console.error('Registration error:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

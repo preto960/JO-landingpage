@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { Role, PERMISSIONS, hasMinRole, hasPermission, Permission } from '@/lib/rbac'
-import { Prisma } from '@prisma/client'
+import { PermissionName } from '@/lib/rbac'
 
-type SessionUser = {
+type DbUser = {
   id: string
-  name: string
-  email: string
-  role: string
-  image?: string | null
+  roleId: string
+  role: { name: string }
+  isActive: boolean
 }
 
 interface AuthResult {
   success: true
-  user: SessionUser
-  dbUser: {
-    id: string
-    role: Role
-    isActive: boolean
-  }
+  user: { id: string; name: string; email: string; role: string; roleId: string; image?: string | null }
+  dbUser: DbUser
 }
 
 interface AuthError {
@@ -34,8 +28,7 @@ type AuthCheck = AuthResult | AuthError
  * Returns the user data or a NextResponse error.
  */
 export async function requireAuth(options?: {
-  minRole?: Role
-  permission?: Permission
+  permission?: PermissionName | PermissionName[]
   requireActive?: boolean
 }): Promise<AuthCheck> {
   try {
@@ -50,7 +43,12 @@ export async function requireAuth(options?: {
 
     const dbUser = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, role: true, isActive: true },
+      select: {
+        id: true,
+        roleId: true,
+        isActive: true,
+        role: { select: { name: true } },
+      },
     })
 
     if (!dbUser) {
@@ -67,34 +65,29 @@ export async function requireAuth(options?: {
       }
     }
 
-    // Check minimum role
-    if (options?.minRole) {
-      if (!hasMinRole(dbUser.role, options.minRole)) {
-        return {
-          success: false,
-          response: NextResponse.json({ error: 'Sin permisos suficientes' }, { status: 403 }),
-        }
-      }
-    }
-
-    // Check specific permission
+    // Check permissions from session (JWT-stored, no DB query)
     if (options?.permission) {
-      if (!hasPermission(dbUser.role, options.permission)) {
+      const required = Array.isArray(options.permission) ? options.permission : [options.permission]
+      const hasAll = required.every(p => session.user.permissions.includes(p))
+      if (!hasAll) {
         return {
           success: false,
-          response: NextResponse.json({ error: 'Sin permisos suficientes' }, { status: 403 }),
+          response: NextResponse.json({ error: 'Sin permisos' }, { status: 403 }),
         }
       }
     }
 
     return {
       success: true,
-      user: session.user as SessionUser,
-      dbUser: {
-        id: dbUser.id,
-        role: dbUser.role,
-        isActive: dbUser.isActive,
+      user: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        role: session.user.role,
+        roleId: session.user.roleId,
+        image: session.user.image,
       },
+      dbUser,
     }
   } catch (error) {
     console.error('requireAuth error:', error)
@@ -105,18 +98,14 @@ export async function requireAuth(options?: {
   }
 }
 
-/**
- * Helper to get client IP from request
- */
+/** Helper to get client IP from request */
 export function getClientIp(request: NextRequest): string {
   return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')
     || 'unknown'
 }
 
-/**
- * Create an audit log entry
- */
+/** Create an audit log entry */
 export async function createAuditLog(data: {
   userId?: string
   action: string

@@ -1,17 +1,9 @@
 'use client'
 
-import {
-  Users,
-  ShoppingCart,
-  DollarSign,
-  TrendingUp,
-  ArrowUpRight,
-  Eye,
-  Package,
-  Star,
-} from 'lucide-react'
+import { Users, ShoppingCart, DollarSign, TrendingUp, ArrowUpRight, Eye, Package, Star } from 'lucide-react'
 import Link from 'next/link'
-import { ROLE_LABELS, ROLE_COLORS, Role } from '@/lib/rbac'
+import { PermissionGate } from '@/components/rbac/PermissionGate'
+import { ROLE_LABELS, ROLE_COLORS } from '@/lib/rbac'
 
 const stats = [
   { title: 'Ventas Totales', value: '$0', change: '0%', trend: 'up' as const, icon: DollarSign, accent: '#22c55e' },
@@ -26,43 +18,23 @@ const cardStyle: React.CSSProperties = {
 }
 
 const btnGold: React.CSSProperties = {
-  fontFamily: "'Jost', sans-serif",
-  fontSize: '.78rem',
-  fontWeight: 500,
-  letterSpacing: '.18em',
-  textTransform: 'uppercase',
-  padding: '.75rem 1.5rem',
-  background: '#C9A84C',
-  color: '#0A0A0A',
-  border: 'none',
-  borderRadius: 0,
-  cursor: 'pointer',
-  transition: 'background .3s, transform .1s',
-  textDecoration: 'none',
-  display: 'inline-block',
+  fontFamily: "'Jost', sans-serif", fontSize: '.78rem', fontWeight: 500, letterSpacing: '.18em',
+  textTransform: 'uppercase', padding: '.75rem 1.5rem', background: '#C9A84C', color: '#0A0A0A',
+  border: 'none', borderRadius: 0, cursor: 'pointer', transition: 'background .3s, transform .1s',
+  textDecoration: 'none', display: 'inline-block',
 }
 
 const btnOutline: React.CSSProperties = {
-  fontFamily: "'Jost', sans-serif",
-  fontSize: '.78rem',
-  fontWeight: 500,
-  letterSpacing: '.18em',
-  textTransform: 'uppercase',
-  padding: '.625rem 1.25rem',
-  background: 'transparent',
-  color: 'rgba(245,240,232,.5)',
-  border: '1px solid rgba(245,240,232,.12)',
-  borderRadius: 0,
-  cursor: 'pointer',
-  transition: 'all .3s',
-  textDecoration: 'none',
-  display: 'inline-block',
+  fontFamily: "'Jost', sans-serif", fontSize: '.78rem', fontWeight: 500, letterSpacing: '.18em',
+  textTransform: 'uppercase', padding: '.625rem 1.25rem', background: 'transparent',
+  color: 'rgba(245,240,232,.5)', border: '1px solid rgba(245,240,232,.12)', borderRadius: 0,
+  cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block',
 }
 
 export default function DashboardContent({
   user,
 }: {
-  user: { name?: string | null; email?: string | null; role?: string | null; image?: string | null; id?: string } | undefined
+  user: { name?: string | null; email?: string | null; role?: string | null; image?: string | null; id?: string; permissions?: string[] } | undefined
 }) {
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
@@ -76,7 +48,6 @@ export default function DashboardContent({
         </p>
       </div>
 
-      {/* Gold divider */}
       <div style={{ width: '100%', height: '1px', background: 'linear-gradient(to right, rgba(201,168,76,.3), transparent)' }} />
 
       {/* Stats */}
@@ -103,12 +74,9 @@ export default function DashboardContent({
 
       {/* Activity + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-
-        {/* Activity */}
         <div className="lg:col-span-2 p-4 sm:p-6" style={{ ...cardStyle }}>
           <h2 className="text-base sm:text-[1.125rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: '#F5F0E8', margin: '0 0 .25rem' }}>Actividad Reciente</h2>
           <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.7rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(245,240,232,.25)', marginBottom: '1.25rem' }}>Últimos eventos en tu panel</p>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {[
               { icon: Package, title: 'Configuración inicial completada', description: 'Tu panel de administración está listo. Comienza configurando tu contenido.', time: 'Ahora', accent: '#C9A84C' },
@@ -132,33 +100,37 @@ export default function DashboardContent({
             })}
           </div>
 
-          {/* CTA */}
-          <div className="mt-5 sm:mt-8 p-3.5 sm:p-6" style={{ background: 'rgba(201,168,76,.03)', border: '1px solid rgba(201,168,76,.1)' }}>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h3 className="text-[.95rem] sm:text-[1rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: '#F5F0E8', margin: 0 }}>¿Empezamos a configurar?</h3>
-                <p className="text-[.75rem] sm:text-[.8rem]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.35)', marginTop: '.25rem', lineHeight: 1.6 }}>Agrega tu primer contenido y personaliza tu landing page.</p>
+          {/* CTA - only show if user can access settings */}
+          <PermissionGate permission="settings.view" fallback={null}>
+            <div className="mt-5 sm:mt-8 p-3.5 sm:p-6" style={{ background: 'rgba(201,168,76,.03)', border: '1px solid rgba(201,168,76,.1)' }}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h3 className="text-[.95rem] sm:text-[1rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, color: '#F5F0E8', margin: 0 }}>¿Empezamos a configurar?</h3>
+                  <p className="text-[.75rem] sm:text-[.8rem]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.35)', marginTop: '.25rem', lineHeight: 1.6 }}>Agrega tu primer contenido y personaliza tu landing page.</p>
+                </div>
+                <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={{ ...btnGold, whiteSpace: 'nowrap' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#E8C97A')} onMouseLeave={(e) => (e.currentTarget.style.background = '#C9A84C')}>
+                  Comenzar
+                </Link>
               </div>
-              <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={{ ...btnGold, whiteSpace: 'nowrap' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#E8C97A')} onMouseLeave={(e) => (e.currentTarget.style.background = '#C9A84C')}>
-                Comenzar
-              </Link>
             </div>
-          </div>
+          </PermissionGate>
         </div>
 
         {/* Quick Actions */}
         <div className="p-4 sm:p-6" style={{ ...cardStyle }}>
           <h2 className="text-base sm:text-[1.125rem]" style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, color: '#F5F0E8', margin: '0 0 .25rem' }}>Acciones Rápidas</h2>
           <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.7rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(245,240,232,.25)', marginBottom: '1.25rem' }}>Configuración inicial</p>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
             {[
               { label: 'Agregar Producto', icon: Package, desc: 'Sube tu primer producto', disabled: true },
               { label: 'Ver Landing', icon: TrendingUp, desc: 'Preview en vivo', href: '/' },
               { label: 'Configurar Pagos', icon: DollarSign, desc: 'Métodos de pago', disabled: true },
-              { label: 'Mi Perfil', icon: Users, desc: 'Editar información', href: '/dashboard/settings' },
+              { label: 'Mi Perfil', icon: Users, desc: 'Editar información', href: '/dashboard/settings', permission: 'settings.view' as string },
             ].map((action, i) => {
               const Icon = action.icon
+              const hasPermission = !action.permission || (user?.permissions || []).includes(action.permission)
+              if (!hasPermission && !action.disabled) return null
+
               const content = (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.75rem', borderLeft: '2px solid transparent', cursor: action.disabled ? 'not-allowed' : 'pointer', transition: 'all .2s' }} onMouseEnter={(e) => { if (!action.disabled) { e.currentTarget.style.borderLeftColor = 'rgba(201,168,76,.3)'; e.currentTarget.style.background = 'rgba(245,240,232,.02)' } }} onMouseLeave={(e) => { e.currentTarget.style.borderLeftColor = 'transparent'; e.currentTarget.style.background = 'transparent' }}>
                   <div style={{ width: '2.25rem', height: '2.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(245,240,232,.05)', background: 'rgba(245,240,232,.02)' }}>
@@ -168,16 +140,12 @@ export default function DashboardContent({
                     <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.75rem', textTransform: 'uppercase', letterSpacing: '.08em', color: action.disabled ? 'rgba(245,240,232,.15)' : 'rgba(245,240,232,.55)', margin: 0 }}>{action.label}</p>
                     <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', color: 'rgba(245,240,232,.2)', marginTop: '.125rem' }}>{action.desc}</p>
                   </div>
-                  {action.disabled && (
-                    <span style={{ fontFamily: "'Jost', sans-serif", fontSize: '.55rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(245,240,232,.2)', background: 'rgba(245,240,232,.03)', padding: '.125rem .375rem' }}>Pronto</span>
-                  )}
+                  {action.disabled && <span style={{ fontFamily: "'Jost', sans-serif", fontSize: '.55rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(245,240,232,.2)', background: 'rgba(245,240,232,.03)', padding: '.125rem .375rem' }}>Pronto</span>}
                 </div>
               )
 
-              if (action.disabled) {
-                return <div key={i} style={{ opacity: 0.5 }}>{content}</div>
-              }
-              return <Link key={i} href={action.href || '#'} style={{ textDecoration: 'none' }}>{content}</Link>
+              if (action.disabled) return <div key={i} style={{ opacity: 0.5 }}>{content}</div>
+              return <Link key={i} href={(action as any).href || '#'} style={{ textDecoration: 'none' }}>{content}</Link>
             })}
           </div>
         </div>
@@ -193,12 +161,16 @@ export default function DashboardContent({
             <div className="min-w-0">
               <p className="text-[.8rem] sm:text-[.85rem] truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)', margin: 0 }}>{user?.name}</p>
               <p className="text-[.75rem] sm:text-[.8rem] truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', margin: '.125rem 0' }}>{user?.email}</p>
-              <span className="inline-block px-1.5 py-0.5 mt-1" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.55rem', textTransform: 'uppercase', letterSpacing: '.08em', color: ROLE_COLORS[(user?.role as Role) || 'viewer'], background: 'rgba(201,168,76,.05)' }}>{ROLE_LABELS[(user?.role as Role) || 'viewer']}</span>
+              <span className="inline-block px-1.5 py-0.5 mt-1" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.55rem', textTransform: 'uppercase', letterSpacing: '.08em', color: ROLE_COLORS[user?.role || 'viewer'] || 'rgba(245,240,232,.5)', background: 'rgba(201,168,76,.05)' }}>
+                {ROLE_LABELS[user?.role || 'viewer'] || user?.role || 'Viewer'}
+              </span>
             </div>
           </div>
-          <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={btnOutline} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.4)'; e.currentTarget.style.color = '#C9A84C' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.12)'; e.currentTarget.style.color = 'rgba(245,240,232,.5)' }}>
-            Editar Perfil
-          </Link>
+          <PermissionGate permission="settings.view">
+            <Link href="/dashboard/settings" className="w-full sm:w-auto text-center" style={btnOutline} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.4)'; e.currentTarget.style.color = '#C9A84C' }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.12)'; e.currentTarget.style.color = 'rgba(245,240,232,.5)' }}>
+              Editar Perfil
+            </Link>
+          </PermissionGate>
         </div>
       </div>
     </div>
