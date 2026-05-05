@@ -20,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             include: {
               role: {
                 include: {
-                  permissions: {
+                  rolePermissions: {
                     include: { permission: true },
                   },
                 },
@@ -39,7 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             data: { lastLogin: new Date() },
           }).catch(() => {})
 
-          const permissions = user.role.permissions.map(rp => rp.permission.name)
+          const permissions = user.role.rolePermissions.map(rp => rp.permission.name)
 
           return {
             id: user.id,

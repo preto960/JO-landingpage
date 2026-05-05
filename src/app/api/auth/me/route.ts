@@ -11,7 +11,7 @@ export async function GET() {
       where: { id: session.user.id },
       select: {
         id: true, name: true, email: true, image: true, isActive: true, lastLogin: true, createdAt: true,
-        role: { select: { name: true, label: true, permissions: { include: { permission: { select: { name: true, label: true, module: true } } } } } },
+        role: { select: { name: true, label: true, rolePermissions: { include: { permission: { select: { name: true, label: true, module: true } } } } } },
       },
     })
 
@@ -21,7 +21,7 @@ export async function GET() {
       user: {
         ...user,
         role: user.role.name,
-        permissions: user.role.permissions.map(rp => rp.permission.name),
+        permissions: user.role.rolePermissions.map(rp => rp.permission.name),
       },
     })
   } catch (error) {
