@@ -1,4 +1,4 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma generate && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/"
+  "buildCommand": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/"
 }
