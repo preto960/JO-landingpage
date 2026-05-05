@@ -20,6 +20,8 @@ export default auth((req) => {
 
   for (const [route, perms] of Object.entries(PAGE_PERMISSIONS)) {
     if (pathname.startsWith(route)) {
+      // If permissions are empty (old session), allow through — let the page handle it
+      if (permissions.length === 0) break
       const hasAccess = perms.some(p => permissions.includes(p))
       if (!hasAccess) {
         return Response.redirect(new URL('/dashboard', req.url))
@@ -35,6 +37,8 @@ export default auth((req) => {
 
   for (const [route, perms] of Object.entries(API_PERMISSIONS)) {
     if (pathname.startsWith(route)) {
+      // If permissions are empty (old session), allow through — let the API handle it
+      if (permissions.length === 0) break
       const hasAccess = perms.some(p => permissions.includes(p))
       if (!hasAccess) {
         return new Response(JSON.stringify({ error: 'Sin permisos' }), {
