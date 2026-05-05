@@ -1,7 +1,7 @@
 'use client'
 
-import JOShopPresentation from '@/components/JOShopPresentation'
+import JOPresentation from '@/components/JOPresentation'
 
 export default function Home() {
-  return <JOShopPresentation />
+  return <JOPresentation />
 }

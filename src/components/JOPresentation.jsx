@@ -138,7 +138,7 @@ function Nav({ scrollTo }) {
       background: scrolled ? "rgba(10,10,10,.95)" : "rgba(10,10,10,.8)",
       backdropFilter:"blur(20px)",
       borderBottom:"1px solid rgba(201,168,76,.15)", transition:"background .3s" }}>
-      <img src={JO_ICON} alt="JO-Shop" style={{ height:60, width:"auto", objectFit:"contain" }} />
+      <img src={JO_ICON} alt="JO" style={{ height:60, width:"auto", objectFit:"contain" }} />
       <ul className="jl-nav-links" style={{ display:"flex", gap:"2.5rem", listStyle:"none", margin:0, padding:0 }}>
         {[["Servicios","servicios"],["Cómo funciona","como"],["Beneficios","beneficios"],["Plataformas","plataformas"]].map(([label,id]) => (
           <li key={id}>
@@ -154,7 +154,7 @@ function Nav({ scrollTo }) {
         ))}
       </ul>
       <div className="jl-nav-cta">
-        <BtnOutline onClick={()=>WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio.")}>Cotiza gratis</BtnOutline>
+        <BtnOutline onClick={()=>WA("Hola, me interesa conocer más sobre JO para mi negocio.")}>Cotiza gratis</BtnOutline>
       </div>
       <button className="jl-hamburger" onClick={()=>setMenuOpen(true)} style={{ display:"none", background:"none", border:"none", cursor:"pointer", padding:"0.5rem" }}
         aria-label="Toggle menu">
@@ -181,7 +181,7 @@ function Nav({ scrollTo }) {
     }}>
       {/* Drawer Header */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"1.5rem 1.75rem", borderBottom:"1px solid rgba(201,168,76,.1)" }}>
-        <img src={JO_ICON} alt="JO-Shop" style={{ height:40, width:"auto", objectFit:"contain" }} />
+        <img src={JO_ICON} alt="JO" style={{ height:40, width:"auto", objectFit:"contain" }} />
         <button onClick={()=>setMenuOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", padding:"0.4rem", borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center" }}
           aria-label="Close menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,.5)" strokeWidth="2" strokeLinecap="round">
@@ -206,7 +206,7 @@ function Nav({ scrollTo }) {
       </nav>
       {/* Drawer Footer CTA */}
       <div style={{ padding:"1.5rem 1.75rem 2rem", borderTop:"1px solid rgba(201,168,76,.1)" }}>
-        <BtnOutline onClick={()=>{ WA("Hola, me interesa conocer más sobre JO-Shop para mi negocio."); setMenuOpen(false); }}>Cotiza gratis</BtnOutline>
+        <BtnOutline onClick={()=>{ WA("Hola, me interesa conocer más sobre JO para mi negocio."); setMenuOpen(false); }}>Cotiza gratis</BtnOutline>
         <p style={{ fontSize:".68rem", letterSpacing:".08em", color:"rgba(245,240,232,.3)", marginTop:"1rem", textAlign:"center" }}>Tu tienda online lista para vender en 14 días</p>
       </div>
     </div>
@@ -238,7 +238,7 @@ function Hero({ scrollTo }) {
         </p>
         <div style={{ ...fade(.9), marginTop:"3.5rem", display:"flex", gap:"1.5rem", justifyContent:"center", flexWrap:"wrap" }}>
           <BtnGold onClick={()=>scrollTo("servicios")}>Quiero mi tienda</BtnGold>
-          <BtnOutline onClick={()=>WA("Hola, quiero cotizar mi tienda online con JO-Shop.")}>Cotizar ahora</BtnOutline>
+          <BtnOutline onClick={()=>WA("Hola, quiero cotizar mi tienda online con JO.")}>Cotizar ahora</BtnOutline>
         </div>
         <div style={{ ...fade(1.2), display:"flex", flexDirection:"column", alignItems:"center", gap:".6rem", marginTop:"4rem" }}>
           <span style={{ fontSize:".65rem", letterSpacing:".25em", textTransform:"uppercase", color:s.gray }}>Empieza ahora</span>
@@ -386,12 +386,12 @@ function Benefits() {
 // ── Social Proof ──────────────────────────────────────────────────
 function SocialProof() {
   const stats = [
-    { n:"+", v:"350", l:"negocios ya venden más con JO-Shop" },
+    { n:"+", v:"350", l:"negocios ya venden más con JO" },
     { n:"x", v:"3.5", l:"más ventas promedio el primer mes" },
     { n:"hrs", v:"<30", l:"min de capacitación para usar tu tienda" },
   ];
   const testimonials = [
-    { name:"Carolina M.", biz:"Boutique de ropa — Medellín", text:"Antes perdía el 30% de mis pedidos por WhatsApp porque no alcanzaba a responder. Desde que lancé mi tienda web con JO-Shop, facturé $8.2 millones el primer mes, un 220% más que mi mejor mes anterior. Ahora recibo órdenes a las 2 de la madrugada sin levantarme de la cama." },
+    { name:"Carolina M.", biz:"Boutique de ropa — Medellín", text:"Antes perdía el 30% de mis pedidos por WhatsApp porque no alcanzaba a responder. Desde que lancé mi tienda web con JO, facturé $8.2 millones el primer mes, un 220% más que mi mejor mes anterior. Ahora recibo órdenes a las 2 de la madrugada sin levantarme de la cama." },
     { name:"Andrés R.", biz:"Distribuidora de alimentos — Bogotá", text:"Mis clientes mayoristas reordenan desde la app sin llamarme ni mandar un solo WhatsApp. El sistema de pedidos automáticos me eliminó 20 horas semanales de trabajo operativo. Pude contratar un vendedor nuevo con el tiempo que recuperé. La mejor inversión del año." },
     { name:"Laura P.", biz:"Pastelería artesanal — Cali", text:"Pensaba que una tienda online era solo para grandes empresas. Me equivoqué: en 3 meses pasé de vender solo en mi barrio a tener pedidos en toda la ciudad. El sistema de delivery con rastreo redujo mis reclamos a cero. HOY facturo el triple y estoy contratando personal." },
   ];
@@ -491,7 +491,7 @@ function CTA() {
         <Reveal>
           <div className="jl-cta-box" style={{ border:"1px solid rgba(201,168,76,.2)", padding:"6rem 5rem", position:"relative" }}>
             {C("tl")}{C("tr")}{C("bl")}{C("br")}
-            <img src={JO_ICON} alt="JO-Shop" style={{ height:100, width:"auto", objectFit:"contain", display:"block", margin:"0 auto 2.5rem" }} />
+            <img src={JO_ICON} alt="JO" style={{ height:100, width:"auto", objectFit:"contain", display:"block", margin:"0 auto 2.5rem" }} />
             <H2 style={{ textAlign:"center" }}>
               Tu próxima venta<br/>puede ser<br/><em style={{ fontStyle:"italic", color:s.goldLight }}>en línea. Hoy.</em>
             </H2>
@@ -499,8 +499,8 @@ function CTA() {
               Agenda una llamada gratuita de 15 minutos. Te mostramos una propuesta visual de cómo quedaría tu tienda, el presupuesto exacto y una proyección de cuánto podrías facturar en tu primer mes. Cero compromiso, cero letra pequeña.
             </p>
             <div style={{ display:"flex", gap:"1.2rem", justifyContent:"center", flexWrap:"wrap" }}>
-              <BtnGold onClick={()=>WA("Hola, quiero agendar una llamada gratuita para ver cómo quedaría mi tienda online con JO-Shop.")}>Agendar llamada gratuita</BtnGold>
-              <BtnOutline onClick={()=>WA("Hola, quiero una cotización personalizada para mi negocio con JO-Shop.")}>Cotización personalizada</BtnOutline>
+              <BtnGold onClick={()=>WA("Hola, quiero agendar una llamada gratuita para ver cómo quedaría mi tienda online con JO.")}>Agendar llamada gratuita</BtnGold>
+              <BtnOutline onClick={()=>WA("Hola, quiero una cotización personalizada para mi negocio con JO.")}>Cotización personalizada</BtnOutline>
             </div>
             <div style={{ display:"flex", gap:"2rem", justifyContent:"center", marginTop:"2.5rem", flexWrap:"wrap" }}>
               {["Consulta 100% gratuita","Respuesta en menos de 2 horas","Sin compromiso"].map(t => (
@@ -522,13 +522,13 @@ function Footer() {
     <footer className="jl-footer" style={{ background:s.blackMid, borderTop:"1px solid rgba(201,168,76,.1)", padding:"3rem 4rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"1.5rem" }}>
       <img src={JO_ICON} alt="JO" style={{ height:36 }} />
       <p style={{ fontSize:".72rem", letterSpacing:".12em", color:s.gray }}>Tu tienda online, en todos los dispositivos</p>
-      <p style={{ fontSize:".72rem", letterSpacing:".12em", color:s.gray }}>© 2026 JO-Shop</p>
+      <p style={{ fontSize:".72rem", letterSpacing:".12em", color:s.gray }}>© 2026 JO</p>
     </footer>
   );
 }
 
 // ── Root ──────────────────────────────────────────────────────────
-export default function JOShopPresentation() {
+export default function JOPresentation() {
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior:"smooth" });
   return (
     <>
