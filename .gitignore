@@ -29,27 +29,48 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+server.log
+dev.log
+dev.out.log
+*.log
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
-
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 local-*
-.claude
+
+# database
+db/
+*.db
+*.sqlite
+*.sqlite3
+
+# lock files (usamos npm -> package-lock.json)
+bun.lock
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+
+# IA/CI environment artifacts
+skills/
+.zscripts/
 .z-ai-config
-*.log
-dev.log
-dev.out.log
+.claude
+mini-services/
+examples/
+Caddyfile
+
+# upload/download temp directories
+download/
+upload/
+
+# misc IA env
 test
 prompt
-
-server.log
-# Skills directory
-/skills/.env
-db/
