@@ -616,7 +616,7 @@ export default function UsersContent({ user }: { user: { name: string; email: st
                     h === 'Usuario'
                       ? 'col-span-4'
                       : h === 'Acciones'
-                        ? 'col-span-3 text-right'
+                        ? 'col-span-2 text-right'
                         : 'col-span-2'
                   }
                 >
@@ -796,7 +796,7 @@ export default function UsersContent({ user }: { user: { name: string; email: st
                   </div>
 
                   {/* Actions */}
-                  <div className="sm:col-span-3 flex gap-2 justify-end items-center">
+                  <div className="sm:col-span-2 flex gap-3 justify-end items-center">
                     {!isSelf && (
                       <PermissionGate permission="users.activate">
                         <button
