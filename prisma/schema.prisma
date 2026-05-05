@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── RBAC Tables ──────────────────────────────────────────
+// ─── RBAC Tables (created with snake_case from the start) ──
 
 model Role {
   id              String          @id @default(cuid())
@@ -46,20 +46,25 @@ model RolePermission {
 }
 
 // ─── Auth Tables ──────────────────────────────────────────
+// NOTE: Original columns (emailVerified, createdAt, updatedAt, etc.) are still
+// camelCase in the DB because the column-rename migration never completed.
+// Only NEW columns added by migration (roleId, isActive, lastLogin, inviteCodeId)
+// use @map because they were created with snake_case names.
+// Similarly, Account and Session columns are still camelCase.
 
 model User {
   id             String        @id @default(cuid())
   name           String
   email          String        @unique
-  emailVerified  DateTime?     @map("email_verified")
+  emailVerified  DateTime?
   password       String
   role           Role          @relation(fields: [roleId], references: [id])
   roleId         String        @map("role_id")
   image          String?
   isActive       Boolean       @default(true) @map("is_active")
   lastLogin      DateTime?     @map("last_login")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   accounts        Account[]
   sessions        Session[]
@@ -73,17 +78,17 @@ model User {
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String  @map("user_id")
+  userId            String
   type              String
   provider          String
-  providerAccountId String  @map("provider_account_id")
-  refreshToken      String? @map("refresh_token")
-  accessToken       String? @map("access_token")
-  expiresAt         Int?    @map("expires_at")
-  tokenType         String? @map("token_type")
+  providerAccountId String
+  refreshToken      String?
+  accessToken       String?
+  expiresAt         Int?
+  tokenType         String?
   scope             String?
-  idToken           String? @map("id_token")
-  sessionState      String? @map("session_state")
+  idToken           String?
+  sessionState      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -93,8 +98,8 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
+  sessionToken String   @unique
+  userId       String
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -111,29 +116,31 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+// AuditLog: columns are still camelCase (original), table renamed to audit_logs
 model AuditLog {
   id        String   @id @default(cuid())
-  userId    String?  @map("user_id")
+  userId    String?
   action    String
   details   String?
-  ipAddress String?  @map("ip_address")
-  createdAt DateTime @default(now()) @map("created_at")
+  ipAddress String?
+  createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
 }
 
+// InviteCode: original columns still camelCase, new roleId is snake_case
 model InviteCode {
   id        String    @id @default(cuid())
   code      String    @unique
   role      Role      @relation(fields: [roleId], references: [id])
   roleId    String    @map("role_id")
-  maxUses   Int       @default(1) @map("max_uses")
-  usedCount Int       @default(0) @map("used_count")
-  expiresAt DateTime? @map("expires_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  createdBy String    @map("created_by")
+  maxUses   Int       @default(1)
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  createdBy String
   usedBy    User?     @relation("InviteUsedBy")
   creator   User      @relation("InviteCreator", fields: [createdBy], references: [id], onDelete: Cascade)
 
