@@ -18,76 +18,70 @@ export async function POST(request: Request) {
     const log: string[] = []
 
     // ─── 1. Create RBAC tables ──────────────────────────────
-    await q(`
-      CREATE TABLE IF NOT EXISTS roles (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        name TEXT UNIQUE NOT NULL,
-        label TEXT NOT NULL,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS permissions (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        name TEXT UNIQUE NOT NULL,
-        label TEXT NOT NULL,
-        module TEXT NOT NULL,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS role_permissions (
-        role_id TEXT REFERENCES roles(id) ON DELETE CASCADE,
-        permission_id TEXT REFERENCES permissions(id) ON DELETE CASCADE,
-        PRIMARY KEY (role_id, permission_id)
-      );
-    `)
+    await q(`CREATE TABLE IF NOT EXISTS roles (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT UNIQUE NOT NULL,
+      label TEXT NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`)
+    await q(`CREATE TABLE IF NOT EXISTS permissions (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT UNIQUE NOT NULL,
+      label TEXT NOT NULL,
+      module TEXT NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`)
+    await q(`CREATE TABLE IF NOT EXISTS role_permissions (
+      role_id TEXT REFERENCES roles(id) ON DELETE CASCADE,
+      permission_id TEXT REFERENCES permissions(id) ON DELETE CASCADE,
+      PRIMARY KEY (role_id, permission_id)
+    )`)
     log.push('RBAC tables created/verified')
 
     // ─── 2. Seed roles ──────────────────────────────────────
-    await q(`
-      INSERT INTO roles (id, name, label, description) VALUES
-        ('role_super_admin', 'super_admin', 'Super Administrador', 'Acceso total al sistema'),
-        ('role_admin', 'admin', 'Administrador', 'Gestión de usuarios e invitaciones'),
-        ('role_editor', 'editor', 'Editor', 'Acceso a configuración básica'),
-        ('role_viewer', 'viewer', 'Observador', 'Solo lectura del dashboard')
-      ON CONFLICT (name) DO NOTHING;
-    `)
+    await q(`INSERT INTO roles (id, name, label, description) VALUES
+      ('role_super_admin', 'super_admin', 'Super Administrador', 'Acceso total al sistema'),
+      ('role_admin', 'admin', 'Administrador', 'Gestión de usuarios e invitaciones'),
+      ('role_editor', 'editor', 'Editor', 'Acceso a configuración básica'),
+      ('role_viewer', 'viewer', 'Observador', 'Solo lectura del dashboard')
+    ON CONFLICT (name) DO NOTHING`)
 
     // ─── 3. Seed permissions ────────────────────────────────
-    await q(`
-      INSERT INTO permissions (id, name, label, module, description) VALUES
-        ('perm_dashboard_view', 'dashboard.view', 'Ver Dashboard', 'dashboard', 'Acceder al dashboard principal'),
-        ('perm_users_view', 'users.view', 'Ver Usuarios', 'users', 'Ver lista de usuarios'),
-        ('perm_users_create', 'users.create', 'Crear Usuarios', 'users', 'Crear nuevos usuarios'),
-        ('perm_users_edit_role', 'users.edit_role', 'Cambiar Roles', 'users', 'Modificar el rol de un usuario'),
-        ('perm_users_activate', 'users.activate', 'Activar/Desactivar', 'users', 'Activar o desactivar cuentas'),
-        ('perm_users_delete', 'users.delete', 'Eliminar Usuarios', 'users', 'Eliminar cuentas de usuario'),
-        ('perm_invites_view', 'invites.view', 'Ver Invitaciones', 'invites', 'Ver códigos de invitación'),
-        ('perm_invites_create', 'invites.create', 'Crear Invitaciones', 'invites', 'Generar nuevos códigos'),
-        ('perm_invites_delete', 'invites.delete', 'Eliminar Invitaciones', 'invites', 'Eliminar códigos'),
-        ('perm_settings_view', 'settings.view', 'Ver Configuración', 'settings', 'Acceder a configuración'),
-        ('perm_settings_edit', 'settings.edit', 'Editar Configuración', 'settings', 'Modificar configuración'),
-        ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs')
-      ON CONFLICT (name) DO NOTHING;
-    `)
+    await q(`INSERT INTO permissions (id, name, label, module, description) VALUES
+      ('perm_dashboard_view', 'dashboard.view', 'Ver Dashboard', 'dashboard', 'Acceder al dashboard principal'),
+      ('perm_users_view', 'users.view', 'Ver Usuarios', 'users', 'Ver lista de usuarios'),
+      ('perm_users_create', 'users.create', 'Crear Usuarios', 'users', 'Crear nuevos usuarios'),
+      ('perm_users_edit_role', 'users.edit_role', 'Cambiar Roles', 'users', 'Modificar el rol de un usuario'),
+      ('perm_users_activate', 'users.activate', 'Activar/Desactivar', 'users', 'Activar o desactivar cuentas'),
+      ('perm_users_delete', 'users.delete', 'Eliminar Usuarios', 'users', 'Eliminar cuentas de usuario'),
+      ('perm_invites_view', 'invites.view', 'Ver Invitaciones', 'invites', 'Ver códigos de invitación'),
+      ('perm_invites_create', 'invites.create', 'Crear Invitaciones', 'invites', 'Generar nuevos códigos'),
+      ('perm_invites_delete', 'invites.delete', 'Eliminar Invitaciones', 'invites', 'Eliminar códigos'),
+      ('perm_settings_view', 'settings.view', 'Ver Configuración', 'settings', 'Acceder a configuración'),
+      ('perm_settings_edit', 'settings.edit', 'Editar Configuración', 'settings', 'Modificar configuración'),
+      ('perm_audit_view', 'audit.view', 'Ver Auditoría', 'audit', 'Consultar logs')
+    ON CONFLICT (name) DO NOTHING`)
 
     // ─── 4. Role-permission mappings ────────────────────────
     // super_admin: ALL
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_super_admin', id FROM permissions
-      ON CONFLICT DO NOTHING;`)
+      ON CONFLICT DO NOTHING`)
     // admin: all except users.delete
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_admin', id FROM permissions WHERE name NOT IN ('users.delete')
-      ON CONFLICT DO NOTHING;`)
+      ON CONFLICT DO NOTHING`)
     // editor: dashboard + settings
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'settings.view', 'settings.edit')
-      ON CONFLICT DO NOTHING;`)
+      ON CONFLICT DO NOTHING`)
     // viewer: dashboard only
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_viewer', id FROM permissions WHERE name IN ('dashboard.view')
-      ON CONFLICT DO NOTHING;`)
+      ON CONFLICT DO NOTHING`)
     log.push('Roles, permissions and mappings seeded')
 
     // ─── 5. Rename existing tables to snake_case ────────────
@@ -99,7 +93,7 @@ export async function POST(request: Request) {
 
     for (const [oldName, newName] of renames) {
       try {
-        await q(`ALTER TABLE ${oldName} RENAME TO ${newName};`)
+        await q(`ALTER TABLE ${oldName} RENAME TO ${newName}`)
         log.push(`Renamed ${oldName} -> ${newName}`)
       } catch {
         // Table might already be renamed or not exist
@@ -113,41 +107,39 @@ export async function POST(request: Request) {
       // Check if old 'role' column exists (enum or text)
       if (userCols.includes('role')) {
         // Add new role_id column
-        await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id);`)
+        await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id)`)
         // Migrate existing role values to role_id
-        await q(`
-          UPDATE users SET role_id = CASE
-            WHEN role = 'super_admin' THEN 'role_super_admin'
-            WHEN role = 'admin' THEN 'role_admin'
-            WHEN role = 'editor' THEN 'role_editor'
-            ELSE 'role_viewer'
-          END;
-        `)
+        await q(`UPDATE users SET role_id = CASE
+          WHEN role = 'super_admin' THEN 'role_super_admin'
+          WHEN role = 'admin' THEN 'role_admin'
+          WHEN role = 'editor' THEN 'role_editor'
+          ELSE 'role_viewer'
+        END`)
         // Drop old role column
-        await safeQ(`ALTER TABLE users DROP COLUMN role;`)
+        await safeQ(`ALTER TABLE users DROP COLUMN role`)
         // Drop old enum type
-        await safeQ(`DROP TYPE IF EXISTS "Role";`)
+        await safeQ(`DROP TYPE IF EXISTS "Role"`)
         log.push('Migrated role enum -> role_id FK')
       } else {
-        await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id);`)
+        await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id)`)
         log.push('Added role_id column')
       }
     }
 
     if (!userCols.includes('is_active')) {
-      await safeQ(`ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true;`)
+      await safeQ(`ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true`)
       log.push('Added is_active')
     }
     if (!userCols.includes('last_login')) {
-      await safeQ(`ALTER TABLE users ADD COLUMN last_login TIMESTAMP(3);`)
+      await safeQ(`ALTER TABLE users ADD COLUMN last_login TIMESTAMP(3)`)
       log.push('Added last_login')
     }
     if (!userCols.includes('invite_code_id')) {
       // Check if old inviteCodeId exists
       if (userCols.includes('invitecodeid') || userCols.includes('"inviteCodeId"')) {
-        await safeQ(`ALTER TABLE users RENAME COLUMN "inviteCodeId" TO invite_code_id;`)
+        await safeQ(`ALTER TABLE users RENAME COLUMN "inviteCodeId" TO invite_code_id`)
       } else {
-        await safeQ(`ALTER TABLE users ADD COLUMN invite_code_id TEXT UNIQUE REFERENCES invite_codes(id) ON DELETE SET NULL;`)
+        await safeQ(`ALTER TABLE users ADD COLUMN invite_code_id TEXT UNIQUE REFERENCES invite_codes(id) ON DELETE SET NULL`)
       }
     }
 
@@ -164,7 +156,7 @@ export async function POST(request: Request) {
     ]
     for (const [old, newName] of colRenames) {
       if (userColsAfter.includes(old.toLowerCase()) && !userColsAfter.includes(newName)) {
-        await safeQ(`ALTER TABLE users RENAME COLUMN "${old}" TO ${newName};`)
+        await safeQ(`ALTER TABLE users RENAME COLUMN "${old}" TO ${newName}`)
       }
     }
 
@@ -173,19 +165,17 @@ export async function POST(request: Request) {
       const invCols = await getColumns('invite_codes')
       if (invCols.length > 0 && !invCols.includes('role_id')) {
         if (invCols.includes('role')) {
-          await q(`ALTER TABLE invite_codes ADD COLUMN role_id TEXT REFERENCES roles(id);`)
-          await q(`
-            UPDATE invite_codes SET role_id = CASE
-              WHEN role = 'super_admin' THEN 'role_super_admin'
-              WHEN role = 'admin' THEN 'role_admin'
-              WHEN role = 'editor' THEN 'role_editor'
-              ELSE 'role_viewer'
-            END;
-          `)
-          await safeQ(`ALTER TABLE invite_codes DROP COLUMN role;`)
+          await q(`ALTER TABLE invite_codes ADD COLUMN role_id TEXT REFERENCES roles(id)`)
+          await q(`UPDATE invite_codes SET role_id = CASE
+            WHEN role = 'super_admin' THEN 'role_super_admin'
+            WHEN role = 'admin' THEN 'role_admin'
+            WHEN role = 'editor' THEN 'role_editor'
+            ELSE 'role_viewer'
+          END`)
+          await safeQ(`ALTER TABLE invite_codes DROP COLUMN role`)
           log.push('Migrated invite_codes role -> role_id FK')
         } else {
-          await q(`ALTER TABLE invite_codes ADD COLUMN role_id TEXT REFERENCES roles(id);`)
+          await q(`ALTER TABLE invite_codes ADD COLUMN role_id TEXT REFERENCES roles(id)`)
         }
       }
 
@@ -201,7 +191,7 @@ export async function POST(request: Request) {
       ]
       for (const [old, newName] of invRenames) {
         if (invColsAfter.map(c => c.toLowerCase()).includes(old.toLowerCase()) && !invColsAfter.includes(newName)) {
-          await safeQ(`ALTER TABLE invite_codes RENAME COLUMN "${old}" TO ${newName};`)
+          await safeQ(`ALTER TABLE invite_codes RENAME COLUMN "${old}" TO ${newName}`)
         }
       }
     } catch {
@@ -219,7 +209,7 @@ export async function POST(request: Request) {
         ]
         for (const [old, newName] of alRenames) {
           if (alCols.map(c => c.toLowerCase()).includes(old.toLowerCase()) && !alCols.includes(newName)) {
-            await safeQ(`ALTER TABLE audit_logs RENAME COLUMN "${old}" TO ${newName};`)
+            await safeQ(`ALTER TABLE audit_logs RENAME COLUMN "${old}" TO ${newName}`)
           }
         }
       }
@@ -227,11 +217,11 @@ export async function POST(request: Request) {
 
     // ─── 10. Promote user ──────────────────────────────────
     if (promoteEmail) {
-      await q(`UPDATE users SET role_id = 'role_super_admin' WHERE email = $1;`, [promoteEmail])
+      await q(`UPDATE users SET role_id = 'role_super_admin' WHERE email = $1`, [promoteEmail])
       log.push(`Promoted ${promoteEmail} to super_admin`)
     } else {
       // Promote ALL existing users to super_admin (safe default for migration)
-      const r = await q(`UPDATE users SET role_id = 'role_super_admin' WHERE role_id NOT IN (SELECT id FROM roles);`)
+      await q(`UPDATE users SET role_id = 'role_super_admin' WHERE role_id NOT IN (SELECT id FROM roles)`)
       log.push('All unmapped users promoted to super_admin')
     }
 
@@ -239,7 +229,7 @@ export async function POST(request: Request) {
     const users = await q(`
       SELECT u.id, u.email, u.name, u.is_active, r.name as role_name, r.label as role_label
       FROM users u LEFT JOIN roles r ON u.role_id = r.id
-      ORDER BY u.created_at ASC;
+      ORDER BY u.created_at ASC
     `)
 
     return NextResponse.json({
@@ -260,7 +250,7 @@ export async function GET() {
     const tables = await q(`
       SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public'
-      ORDER BY table_name;
+      ORDER BY table_name
     `)
     const userCols = await getColumns('users')
 
