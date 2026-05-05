@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       image TEXT,
       is_active BOOLEAN NOT NULL DEFAULT true,
       last_login TIMESTAMP,
-      invite_code_id TEXT UNIQUE REFERENCES invite_codes(id) ON DELETE SET NULL,
+      invite_code_id TEXT UNIQUE,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )`)
@@ -143,6 +143,9 @@ export async function POST(request: Request) {
       created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       used_by TEXT REFERENCES users(id) ON DELETE SET NULL
     )`)
+    // Add deferred FK (users.invite_code_id -> invite_codes.id)
+    await exec(`ALTER TABLE users ADD CONSTRAINT users_invite_code_id_fkey
+      FOREIGN KEY (invite_code_id) REFERENCES invite_codes(id) ON DELETE SET NULL`)
     log.push('All tables created fresh with snake_case columns')
 
     // ─── 3. Seed roles ──────────────────────────────────────
