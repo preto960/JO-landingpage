@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 /**
  * POST /api/auth/migrate
  *
- * One-time migration:
+ * Idempotent one-time migration:
  * 1. Creates RBAC tables (roles, permissions, role_permissions)
  * 2. Seeds default roles + permissions + mappings
  * 3. Renames existing tables to snake_case
@@ -66,19 +66,15 @@ export async function POST(request: Request) {
     ON CONFLICT (name) DO NOTHING`)
 
     // ─── 4. Role-permission mappings ────────────────────────
-    // super_admin: ALL
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_super_admin', id FROM permissions
       ON CONFLICT DO NOTHING`)
-    // admin: all except users.delete
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_admin', id FROM permissions WHERE name NOT IN ('users.delete')
       ON CONFLICT DO NOTHING`)
-    // editor: dashboard + settings
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_editor', id FROM permissions WHERE name IN ('dashboard.view', 'settings.view', 'settings.edit')
       ON CONFLICT DO NOTHING`)
-    // viewer: dashboard only
     await q(`INSERT INTO role_permissions (role_id, permission_id)
       SELECT 'role_viewer', id FROM permissions WHERE name IN ('dashboard.view')
       ON CONFLICT DO NOTHING`)
@@ -104,20 +100,15 @@ export async function POST(request: Request) {
     const userCols = await getColumns('users')
 
     if (!userCols.includes('role_id')) {
-      // Check if old 'role' column exists (enum or text)
       if (userCols.includes('role')) {
-        // Add new role_id column
         await q(`ALTER TABLE users ADD COLUMN role_id TEXT DEFAULT 'role_viewer' REFERENCES roles(id)`)
-        // Migrate existing role values to role_id
         await q(`UPDATE users SET role_id = CASE
           WHEN role = 'super_admin' THEN 'role_super_admin'
           WHEN role = 'admin' THEN 'role_admin'
           WHEN role = 'editor' THEN 'role_editor'
           ELSE 'role_viewer'
         END`)
-        // Drop old role column
         await safeQ(`ALTER TABLE users DROP COLUMN role`)
-        // Drop old enum type
         await safeQ(`DROP TYPE IF EXISTS "Role"`)
         log.push('Migrated role enum -> role_id FK')
       } else {
@@ -135,7 +126,6 @@ export async function POST(request: Request) {
       log.push('Added last_login')
     }
     if (!userCols.includes('invite_code_id')) {
-      // Check if old inviteCodeId exists
       if (userCols.includes('invitecodeid') || userCols.includes('"inviteCodeId"')) {
         await safeQ(`ALTER TABLE users RENAME COLUMN "inviteCodeId" TO invite_code_id`)
       } else {
@@ -179,7 +169,6 @@ export async function POST(request: Request) {
         }
       }
 
-      // Fix column names
       const invColsAfter = await getColumns('invite_codes')
       const invRenames: [string, string][] = [
         ['maxuses', 'max_uses'], ['maxUses', 'max_uses'],
@@ -220,16 +209,20 @@ export async function POST(request: Request) {
       await q(`UPDATE users SET role_id = 'role_super_admin' WHERE email = $1`, [promoteEmail])
       log.push(`Promoted ${promoteEmail} to super_admin`)
     } else {
-      // Promote ALL existing users to super_admin (safe default for migration)
       await q(`UPDATE users SET role_id = 'role_super_admin' WHERE role_id NOT IN (SELECT id FROM roles)`)
       log.push('All unmapped users promoted to super_admin')
     }
 
     // ─── 11. Verify ────────────────────────────────────────
+    // Re-read columns after all renames to know which names to use
+    const finalCols = await getColumns('users')
+    const hasCreatedAt = finalCols.includes('created_at')
+    const hasIsActive = finalCols.includes('is_active')
+
     const users = await q(`
-      SELECT u.id, u.email, u.name, u.is_active, r.name as role_name, r.label as role_label
+      SELECT u.id, u.email, u.name${hasIsActive ? ', u.is_active' : ''}, r.name as role_name, r.label as role_label
       FROM users u LEFT JOIN roles r ON u.role_id = r.id
-      ORDER BY u.created_at ASC
+      ${hasCreatedAt ? 'ORDER BY u.created_at ASC' : ''}
     `)
 
     return NextResponse.json({
@@ -276,7 +269,6 @@ const prisma = new PrismaClient()
 
 async function q(sql: string, params?: any[]) {
   if (params?.length) {
-    // Use tagged template for parameterized queries
     return prisma.$executeRawUnsafe(sql.replace(/\$1/g, `'${params[0]}'`))
   }
   return prisma.$queryRawUnsafe(sql)
