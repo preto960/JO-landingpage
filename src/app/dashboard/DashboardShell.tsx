@@ -211,14 +211,14 @@ export default function DashboardShell({
                 </DropdownMenuLabel>
                 <div className="my-1" style={{ height: '1px', background: 'rgba(245,240,232,.06)' }} />
                 <PermissionGate permission="settings.view">
-                  <DropdownMenuItem asChild className="cursor-pointer p-2.5">
-                    <Link href="/dashboard/profile" className="flex items-center gap-2 text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)', letterSpacing: '.05em' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#F5F0E8')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.5)')}>
+                  <DropdownMenuItem asChild className="cursor-pointer p-2.5 focus:bg-[rgba(245,240,232,.05)] focus:text-[#F5F0E8]">
+                    <Link href="/dashboard/profile" className="flex items-center gap-2 text-xs outline-none" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)', letterSpacing: '.05em' }}>
                       <Settings className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
                       Mi Perfil
                     </Link>
                   </DropdownMenuItem>
                 </PermissionGate>
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })} className="cursor-pointer p-2.5">
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })} className="cursor-pointer p-2.5 focus:bg-[rgba(248,113,113,.08)]">
                   <span className="flex items-center gap-2 text-xs" style={{ fontFamily: "'Jost', sans-serif", color: '#f87171', letterSpacing: '.05em' }}>
                     <LogOut className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
                     Cerrar sesión

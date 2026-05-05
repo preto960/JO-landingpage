@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Settings, Shield, ShieldCheck, User, ChevronRight } from 'lucide-react'
+import { Shield, ShieldCheck, ChevronRight } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 
 type ConfigCard = {
@@ -15,14 +15,6 @@ type ConfigCard = {
 }
 
 const configCards: ConfigCard[] = [
-  {
-    title: 'Mi Perfil',
-    description: 'Gestionar tu informacion personal, correo y contraseña de acceso al sistema.',
-    icon: User,
-    href: '/dashboard/profile',
-    permission: 'settings.view',
-    accent: '#C9A84C',
-  },
   {
     title: 'Usuarios',
     description: 'Administrar cuentas de usuario, roles asignados, estados de activacion y permisos individuales.',
@@ -64,7 +56,7 @@ export default function ConfigContent({ user }: { user: { name: string; email: s
       </div>
 
       {/* Cards grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {configCards.map((card) => {
           const hasPermission = permissions.includes(card.permission)
           if (!hasPermission) return null
