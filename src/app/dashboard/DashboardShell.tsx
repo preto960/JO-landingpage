@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import {
   LayoutDashboard, Users, ShoppingCart, Settings,
   LogOut, Menu, Bell, Home, ChevronRight, Package, Shield, ShieldCheck,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/rbac'
@@ -32,9 +33,7 @@ const allSidebarItems: SidebarItem[] = [
   { label: 'Panel', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard.view' },
   { label: 'Sistemas', icon: Package, href: '/dashboard/products', permission: 'products.view' },
   { label: 'Pedidos', icon: ShoppingCart, href: '/dashboard/orders', permission: 'orders.view' },
-  { label: 'Usuarios', icon: Shield, href: '/dashboard/users', permission: 'users.view' },
-  { label: 'Roles', icon: ShieldCheck, href: '/dashboard/roles', permission: 'roles.view' },
-  { label: 'Mi Perfil', icon: Settings, href: '/dashboard/profile', permission: 'settings.view' },
+  { label: 'Configuracion', icon: SlidersHorizontal, href: '/dashboard/config', permission: 'settings.view' },
 ]
 
 function getVisibleItems(permissions: string[]): SidebarItem[] {
@@ -100,6 +99,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/dashboard': 'Panel',
   '/dashboard/products': 'Sistemas',
   '/dashboard/orders': 'Pedidos',
+  '/dashboard/config': 'Configuracion',
   '/dashboard/users': 'Usuarios',
   '/dashboard/roles': 'Roles',
   '/dashboard/profile': 'Mi Perfil',
@@ -133,7 +133,7 @@ export default function DashboardShell({
         </div>
         <nav className="flex-1 px-2 py-6 space-y-1 overflow-y-auto">
           {visibleItems.map(item => (
-            <NavItem key={item.label} item={item} isActive={pathname === item.href} pathname={pathname} />
+            <NavItem key={item.label} item={item} isActive={item.href === '/dashboard/config' ? pathname.startsWith('/dashboard/config') || ['/dashboard/users', '/dashboard/roles', '/dashboard/profile'].includes(pathname) : pathname === item.href} pathname={pathname} />
           ))}
         </nav>
         <div style={{ borderTop: '1px solid rgba(245,240,232,.06)' }} className="p-4">
@@ -175,7 +175,7 @@ export default function DashboardShell({
                 </div>
                 <nav className="px-2 py-6 space-y-1">
                   {visibleItems.map(item => (
-                    <NavItem key={item.label} item={item} isActive={pathname === item.href} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
+                    <NavItem key={item.label} item={item} isActive={item.href === '/dashboard/config' ? pathname.startsWith('/dashboard/config') || ['/dashboard/users', '/dashboard/roles', '/dashboard/profile'].includes(pathname) : pathname === item.href} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
                   ))}
                 </nav>
               </SheetContent>
