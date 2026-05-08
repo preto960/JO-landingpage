@@ -31,7 +31,9 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
   const [sending, setSending] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const [onlineCount, setOnlineCount] = useState(0)
+  const [showMembers, setShowMembers] = useState(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const [onlineMembers, setOnlineMembers] = useState<{ id: string; name?: string; role?: string }[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const channelRef = useRef<any>(null)
@@ -67,14 +69,21 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
     channel.bind('pusher:subscription_succeeded', (members: any) => {
       setOnlineCount(members.count)
+      const list: { id: string; name?: string; role?: string }[] = []
+      members.each((m: any) => {
+        list.push({ id: m.id, name: m.info?.name, role: m.info?.role })
+      })
+      setOnlineMembers(list)
     })
 
-    channel.bind('pusher:member_added', () => {
+    channel.bind('pusher:member_added', (member: any) => {
       setOnlineCount(prev => prev + 1)
+      setOnlineMembers(prev => [...prev, { id: member.id, name: member.info?.name, role: member.info?.role }])
     })
 
-    channel.bind('pusher:member_removed', () => {
+    channel.bind('pusher:member_removed', (member: any) => {
       setOnlineCount(prev => Math.max(0, prev - 1))
+      setOnlineMembers(prev => prev.filter(m => m.id !== member.id))
     })
 
     channel.bind('new-message', (data: any) => {
@@ -97,7 +106,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       channel.unbind('pusher:member_added')
       channel.unbind('pusher:member_removed')
       channel.unbind('new-message')
-      channel.unsubscribe()
+      pusher.unsubscribe('presence-admin-chat')
     }
   }, [])
 
@@ -202,21 +211,34 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm" style={{ background: 'rgba(201,168,76,.06)', border: '1px solid rgba(201,168,76,.1)' }}>
+        <button
+          onClick={() => setShowMembers(!showMembers)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm transition-all duration-200 cursor-pointer"
+          style={{
+            background: showMembers ? 'rgba(201,168,76,.12)' : 'rgba(201,168,76,.06)',
+            border: showMembers ? '1px solid rgba(201,168,76,.25)' : '1px solid rgba(201,168,76,.1)',
+          }}
+          onMouseEnter={(e) => { if (!showMembers) e.currentTarget.style.background = 'rgba(201,168,76,.1)' }}
+          onMouseLeave={(e) => { if (!showMembers) e.currentTarget.style.background = 'rgba(201,168,76,.06)' }}
+        >
           <Users className="w-3.5 h-3.5" style={{ color: '#C9A84C' }} />
           <span className="text-xs font-medium" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', letterSpacing: '.05em' }}>
             {onlineCount} {onlineCount === 1 ? 'conectado' : 'conectados'}
           </span>
-        </div>
+        </button>
       </div>
 
-      {/* Messages area */}
-      <div
-        ref={messagesContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-        style={{ background: '#0A0A0A' }}
-      >
+      {/* Main content: chat column + sidebar */}
+      <div className="flex flex-1 min-h-0">
+        {/* Chat column */}
+        <div className="flex flex-col flex-1 min-h-0 relative">
+          {/* Messages area */}
+          <div
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+            style={{ background: '#0A0A0A' }}
+          >
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-3">
@@ -373,6 +395,78 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
           <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.15)' }}>
             Enter para enviar &middot; Shift+Enter nueva linea
           </span>
+        </div>
+        </div>
+        </div>
+
+        {/* Online members sidebar */}
+        <div
+          className="flex-shrink-0 overflow-hidden transition-all duration-300"
+          style={{
+            width: showMembers ? 240 : 0,
+            opacity: showMembers ? 1 : 0,
+            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            borderLeft: showMembers ? '1px solid rgba(245,240,232,.06)' : 'none',
+            background: '#111111',
+          }}
+        >
+          <div style={{ width: 240, height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {/* Sidebar header */}
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(245,240,232,.06)' }}>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" style={{ color: '#C9A84C' }} />
+                <span className="text-xs font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                  En linea
+                </span>
+              </div>
+              <span className="text-[10px] font-bold" style={{ fontFamily: "'Jost', sans-serif", color: '#0A0A0A', background: '#22c55e', borderRadius: '9999px', padding: '1px 7px', minWidth: 18, textAlign: 'center' }}>
+                {onlineCount}
+              </span>
+            </div>
+            {/* Members list */}
+            <div className="flex-1 overflow-y-auto py-2">
+              {onlineMembers.length === 0 ? (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}>
+                    No hay administradores en linea
+                  </p>
+                </div>
+              ) : (
+                onlineMembers.map((member) => {
+                  const isCurrentUser = member.id === user.id
+                  const memberName = member.name || 'Admin'
+                  const memberRole = member.role || 'admin'
+                  const initials = memberName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-2.5 px-4 py-2 transition-colors duration-150"
+                      style={{ background: isCurrentUser ? 'rgba(201,168,76,.06)' : 'transparent' }}
+                      onMouseEnter={(e) => { if (!isCurrentUser) e.currentTarget.style.background = 'rgba(245,240,232,.03)' }}
+                      onMouseLeave={(e) => { if (!isCurrentUser) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'rgba(201,168,76,.12)', color: '#C9A84C' }}>
+                          {initials}
+                        </div>
+                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: '#22c55e', border: '2px solid #111111' }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)' }}>
+                          {memberName}
+                          {isCurrentUser && <span style={{ color: 'rgba(245,240,232,.3)', fontWeight: 400 }}> (Tu)</span>}
+                        </p>
+                        <span className="text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', letterSpacing: '.03em', textTransform: 'uppercase' }}>
+                          {memberRole}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

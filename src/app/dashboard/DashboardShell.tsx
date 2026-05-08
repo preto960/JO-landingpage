@@ -27,19 +27,21 @@ type SidebarItem = {
   href: string
   disabled?: boolean
   permission?: string
+  adminOnly?: boolean
 }
 
 const allSidebarItems: SidebarItem[] = [
   { label: 'Panel', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard.view' },
   { label: 'Sistemas', icon: Package, href: '/dashboard/products', permission: 'products.view' },
   { label: 'Pedidos', icon: ShoppingCart, href: '/dashboard/orders', permission: 'orders.view' },
-  { label: 'Chat Admin', icon: MessageCircle, href: '/dashboard/admin-chat' },
+  { label: 'Chat Admin', icon: MessageCircle, href: '/dashboard/admin-chat', adminOnly: true },
   { label: 'Configuracion', icon: SlidersHorizontal, href: '/dashboard/config', permission: 'settings.view' },
 ]
 
-function getVisibleItems(permissions: string[]): SidebarItem[] {
+function getVisibleItems(permissions: string[], role?: string): SidebarItem[] {
   return allSidebarItems.filter(item => {
     if (item.disabled) return true
+    if (item.adminOnly && role !== 'admin') return false
     if (item.permission) return permissions.includes(item.permission)
     return true
   })
@@ -118,7 +120,7 @@ export default function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const permissions = user?.permissions || []
 
-  const visibleItems = getVisibleItems(permissions)
+  const visibleItems = getVisibleItems(permissions, user?.role)
 
   const currentPageLabel = PAGE_LABELS[pathname] || pathname.split('/').pop()?.charAt(0).toUpperCase() + pathname.split('/').pop()?.slice(1)
 
