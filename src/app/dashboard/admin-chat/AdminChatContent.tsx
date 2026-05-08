@@ -77,10 +77,18 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       setOnlineCount(prev => Math.max(0, prev - 1))
     })
 
-    channel.bind('admin-message', (data: any) => {
+    channel.bind('new-message', (data: any) => {
       setMessages(prev => {
-        if (prev.some(m => m.id === data.id)) return prev
-        return [...prev, data]
+        const msg = {
+          id: String(data.id),
+          content: data.content,
+          senderId: String(data.senderId),
+          senderName: data.senderName || 'Admin',
+          senderRole: 'admin',
+          createdAt: data.createdAt,
+        }
+        if (prev.some(m => m.id === msg.id)) return prev
+        return [...prev, msg]
       })
     })
 
@@ -88,7 +96,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       channel.unbind('pusher:subscription_succeeded')
       channel.unbind('pusher:member_added')
       channel.unbind('pusher:member_removed')
-      channel.unbind('admin-message')
+      channel.unbind('new-message')
       channel.unsubscribe()
     }
   }, [])

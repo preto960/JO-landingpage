@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 
-const BACKEND_URL = process.env.BACKEND_API_URL || 'https://jo-backend-shop.vercel.app'
+const BACKEND_URL = (process.env.BACKEND_API_URL || 'https://jo-backend-shop.vercel.app').replace(/\/+$/, '')
 const SERVICE_TOKEN = process.env.BACKEND_SERVICE_PASSWORD || 'Joshop2024!BridgeSec#Xk9'
 
 // POST /api/admin-chat/pusher-auth — Forward Pusher channel auth to backend
@@ -12,15 +12,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const body = await req.json()
+    // Read the raw body (pusher-js sends application/x-www-form-urlencoded)
+    const body = await req.text()
 
     const res = await fetch(`${BACKEND_URL}/pusher/auth`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SERVICE_TOKEN}`,
-        'Content-Type': 'application/json',
+        'X-Service-Password': SERVICE_TOKEN,
+        'X-Service-User-Email': session.user.email || '',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(body),
+      body,
     })
 
     const data = await res.json()
