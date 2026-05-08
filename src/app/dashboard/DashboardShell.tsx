@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import {
   LayoutDashboard, Users, ShoppingCart, Settings,
   LogOut, Menu, Bell, Home, ChevronRight, Package, Shield, ShieldCheck,
-  SlidersHorizontal,
+  SlidersHorizontal, MessageCircle,
 } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/rbac'
@@ -33,6 +33,7 @@ const allSidebarItems: SidebarItem[] = [
   { label: 'Panel', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard.view' },
   { label: 'Sistemas', icon: Package, href: '/dashboard/products', permission: 'products.view' },
   { label: 'Pedidos', icon: ShoppingCart, href: '/dashboard/orders', permission: 'orders.view' },
+  { label: 'Chat Admin', icon: MessageCircle, href: '/dashboard/admin-chat' },
   { label: 'Configuracion', icon: SlidersHorizontal, href: '/dashboard/config', permission: 'settings.view' },
 ]
 
@@ -100,6 +101,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/dashboard/products': 'Sistemas',
   '/dashboard/orders': 'Pedidos',
   '/dashboard/config': 'Configuracion',
+  '/dashboard/admin-chat': 'Chat Admin',
   '/dashboard/users': 'Usuarios',
   '/dashboard/roles': 'Roles',
   '/dashboard/profile': 'Mi Perfil',
