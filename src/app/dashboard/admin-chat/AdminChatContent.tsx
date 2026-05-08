@@ -292,7 +292,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
                     </div>
                   </div>
                 )
-              })
+              })}
             </div>
           ))
         )}
