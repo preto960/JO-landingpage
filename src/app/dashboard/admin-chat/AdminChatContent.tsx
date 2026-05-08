@@ -68,22 +68,29 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
     channelRef.current = channel
 
     channel.bind('pusher:subscription_succeeded', (members: any) => {
-      setOnlineCount(members.count)
-      const list: { id: string; name?: string; role?: string }[] = []
+      const list: { id: string; name?: string; role?: string; platform?: string }[] = []
       members.each((m: any) => {
-        list.push({ id: m.id, name: m.info?.name, role: m.info?.role })
+        list.push({ id: m.id, name: m.info?.name, role: m.info?.role, platform: m.info?.platform })
       })
-      setOnlineMembers(list)
+      // Filter: show only users from other platforms (not landingpage, not self)
+      const filtered = list.filter(m => m.id !== String(user.id) && m.platform !== 'landingpage')
+      setOnlineMembers(filtered)
+      setOnlineCount(filtered.length)
     })
 
     channel.bind('pusher:member_added', (member: any) => {
+      // Only add if from other platform and not self
+      if (member.id === String(user.id) || member.info?.platform === 'landingpage') return
+      setOnlineMembers(prev => [...prev, { id: member.id, name: member.info?.name, role: member.info?.role, platform: member.info?.platform }])
       setOnlineCount(prev => prev + 1)
-      setOnlineMembers(prev => [...prev, { id: member.id, name: member.info?.name, role: member.info?.role }])
     })
 
     channel.bind('pusher:member_removed', (member: any) => {
-      setOnlineCount(prev => Math.max(0, prev - 1))
-      setOnlineMembers(prev => prev.filter(m => m.id !== member.id))
+      setOnlineMembers(prev => {
+        const filtered = prev.filter(m => m.id !== member.id)
+        setOnlineCount(filtered.length)
+        return filtered
+      })
     })
 
     channel.bind('new-message', (data: any) => {
@@ -223,7 +230,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
         >
           <Users className="w-3.5 h-3.5" style={{ color: '#C9A84C' }} />
           <span className="text-xs font-medium" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', letterSpacing: '.05em' }}>
-            {onlineCount} {onlineCount === 1 ? 'conectado' : 'conectados'}
+            {onlineCount} usuario{onlineCount !== 1 ? 's' : ''} conectado{onlineCount !== 1 ? 's' : ''}
           </span>
         </button>
       </div>
@@ -428,7 +435,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
               {onlineMembers.length === 0 ? (
                 <div className="px-4 py-6 text-center">
                   <p className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}>
-                    No hay administradores en linea
+                    No hay usuarios conectados
                   </p>
                 </div>
               ) : (

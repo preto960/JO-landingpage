@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'X-Service-Password': SERVICE_TOKEN,
         'X-Service-User-Email': session.user.email || '',
+        'X-Platform': 'landingpage',
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body,
