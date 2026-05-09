@@ -74,14 +74,27 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
   useEffect(() => {
     const pusher = getPusherClient()
 
-    pusher.connection.bind('connected', () => setIsConnected(true))
-    pusher.connection.bind('disconnected', () => setIsConnected(false))
+    console.log('[AdminChat] Pusher connection state:', pusher.connection.state)
+
+    pusher.connection.bind('connected', () => {
+      console.log('[AdminChat] Pusher connected')
+      setIsConnected(true)
+    })
+    pusher.connection.bind('disconnected', () => {
+      console.log('[AdminChat] Pusher disconnected')
+      setIsConnected(false)
+    })
     if (pusher.connection.state === 'connected') setIsConnected(true)
 
     const channel = pusher.subscribe('presence-admin-chat')
     channelRef.current = channel
 
+    channel.bind('pusher:subscription_error', (err: any) => {
+      console.error('[AdminChat] Subscription error:', err)
+    })
+
     channel.bind('pusher:subscription_succeeded', (members: any) => {
+      console.log('[AdminChat] Subscribed to presence-admin-chat, members:', members.count)
       const list: OnlineMember[] = []
       members.each((m: any) => {
         list.push({ id: m.id, name: m.info?.name, email: m.info?.email, role: m.info?.role, platform: m.info?.platform })
@@ -108,6 +121,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
     })
 
     return () => {
+      channel.unbind('pusher:subscription_error')
       channel.unbind('pusher:subscription_succeeded')
       channel.unbind('pusher:member_added')
       channel.unbind('pusher:member_removed')
