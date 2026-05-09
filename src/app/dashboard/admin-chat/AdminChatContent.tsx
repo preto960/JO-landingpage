@@ -281,7 +281,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
               {/* Messages */}
               {group.messages.map((msg) => {
-                const isOwn = msg.senderId === user.id
+                const isOwn = msg.senderId === String(user.id)
                 return (
                   <div
                     key={msg.id}
