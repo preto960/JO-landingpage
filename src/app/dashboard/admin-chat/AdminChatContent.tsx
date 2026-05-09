@@ -119,10 +119,12 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       const numericSenderId = String(data.senderId)
       const numericRecipientId = data.recipientId ? String(data.recipientId) : null
       const selectedNumericId = selectedMember.id.split('-')[0]
+      const senderPlatform = data.senderPlatform || 'unknown'
 
+      // Must match BOTH user ID AND platform to isolate conversations
       const isFromSelected =
-        (numericSenderId === selectedNumericId && numericRecipientId === myUserId) ||
-        (numericSenderId === myUserId && numericRecipientId === selectedNumericId)
+        (numericSenderId === selectedNumericId && numericRecipientId === myUserId && senderPlatform === selectedMember.platform) ||
+        (numericSenderId === myUserId && numericRecipientId === selectedNumericId && senderPlatform === 'landingpage')
 
       if (isFromSelected) {
         setMessages(prev => {
@@ -220,6 +222,24 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
         }),
       })
       if (!res.ok) throw new Error('Error sending message')
+      const resData = await res.json()
+      // Optimistic: add the sent message immediately
+      const savedMsg = resData?.message || resData?.data
+      if (savedMsg) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === String(savedMsg.id))) return prev
+          return [...prev, {
+            id: String(savedMsg.id),
+            content: savedMsg.content,
+            senderId: String(savedMsg.senderId),
+            senderName: savedMsg.senderName || 'Admin',
+            senderPlatform: 'landingpage',
+            recipientId: savedMsg.recipientId ? String(savedMsg.recipientId) : null,
+            targetPlatform: savedMsg.targetPlatform || 'all',
+            createdAt: savedMsg.createdAt,
+          }]
+        })
+      }
       setNewMessage('')
     } catch (err) {
       console.error('[AdminChat] Error sending message:', err)
