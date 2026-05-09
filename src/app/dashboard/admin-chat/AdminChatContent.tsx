@@ -70,7 +70,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
   useEffect(() => { fetchMessages() }, [fetchMessages])
 
-  // Pusher subscription
+  // Pusher subscription (once — connection + presence events)
   useEffect(() => {
     const pusher = getPusherClient()
 
@@ -107,7 +107,20 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       })
     })
 
-    channel.bind('new-message', (data: any) => {
+    return () => {
+      channel.unbind('pusher:subscription_succeeded')
+      channel.unbind('pusher:member_added')
+      channel.unbind('pusher:member_removed')
+      pusher.unsubscribe('presence-admin-chat')
+    }
+  }, [user.id])
+
+  // Listen for new-message events (re-binds when selectedMember changes)
+  useEffect(() => {
+    const channel = channelRef.current
+    if (!channel) return
+
+    const handleNewMessage = (data: any) => {
       const newMsg: Message = {
         id: String(data.id),
         content: data.content,
@@ -143,14 +156,12 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
           return [...prev, newMsg]
         })
       }
-    })
+    }
+
+    channel.bind('new-message', handleNewMessage)
 
     return () => {
-      channel.unbind('pusher:subscription_succeeded')
-      channel.unbind('pusher:member_added')
-      channel.unbind('pusher:member_removed')
-      channel.unbind('new-message')
-      pusher.unsubscribe('presence-admin-chat')
+      channel.unbind('new-message', handleNewMessage)
     }
   }, [user.id, selectedMember])
 
