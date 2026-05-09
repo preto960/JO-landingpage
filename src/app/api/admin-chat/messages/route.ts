@@ -12,12 +12,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Forward recipientId query param if present
+    // Forward recipientId + platform query params if present
     const { searchParams } = new URL(req.url)
     const recipientId = searchParams.get('recipientId')
-    const queryParams = recipientId ? `?recipientId=${recipientId}` : ''
+    const senderPlatform = searchParams.get('senderPlatform')
+    const recipientPlatform = searchParams.get('recipientPlatform')
+    const queryParams = new URLSearchParams()
+    if (recipientId) queryParams.set('recipientId', recipientId)
+    if (senderPlatform) queryParams.set('senderPlatform', senderPlatform)
+    if (recipientPlatform) queryParams.set('recipientPlatform', recipientPlatform)
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ''
 
-    const res = await fetch(`${BACKEND_URL}/chats/admin/messages${queryParams}`, {
+    const res = await fetch(`${BACKEND_URL}/chats/admin/messages${queryString}`, {
       headers: {
         'X-Service-Password': SERVICE_TOKEN,
         'X-Service-User-Email': session.user.email || '',

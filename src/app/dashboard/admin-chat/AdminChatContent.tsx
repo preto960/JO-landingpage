@@ -120,11 +120,12 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       const numericRecipientId = data.recipientId ? String(data.recipientId) : null
       const selectedNumericId = selectedMember.id.split('-')[0]
       const senderPlatform = data.senderPlatform || 'unknown'
+      const targetPlatform = data.targetPlatform || 'all'
 
-      // Must match BOTH user ID AND platform to isolate conversations
+      // Must match BOTH platform AND targetPlatform to isolate conversations
       const isFromSelected =
-        (numericSenderId === selectedNumericId && numericRecipientId === myUserId && senderPlatform === selectedMember.platform) ||
-        (numericSenderId === myUserId && numericRecipientId === selectedNumericId && senderPlatform === 'landingpage')
+        (numericSenderId === selectedNumericId && senderPlatform === selectedMember.platform && targetPlatform === 'landingpage') ||
+        (numericSenderId === myUserId && senderPlatform === 'landingpage' && targetPlatform === selectedMember.platform)
 
       if (isFromSelected) {
         setMessages(prev => {
@@ -169,7 +170,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
     setLoadingMessages(true)
     try {
-      const res = await fetch(`/api/admin-chat/messages?recipientId=${recipientId}`)
+      const res = await fetch(`/api/admin-chat/messages?recipientId=${recipientId}&senderPlatform=landingpage&recipientPlatform=${member.platform || 'all'}`)
       if (!res.ok) throw new Error('Error loading messages')
       const data = await res.json()
       setMessages((data.messages || []).map((msg: any) => ({
