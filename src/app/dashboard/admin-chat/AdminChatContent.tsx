@@ -100,13 +100,20 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
         list.push({ id: m.id, name: m.info?.name, email: m.info?.email, role: m.info?.role, platform: m.info?.platform })
       })
       // Show only users from other platforms (not landingpage, not self)
-      const filtered = list.filter(m => m.id !== String(user.id) && m.platform !== 'landingpage')
+      // Pusher user_id is now "1-frontend-shop" format (id + platform suffix)
+      const myUserId = String(user.id)
+      const filtered = list.filter(m => {
+        const numericId = String(parseInt(m.id))
+        return numericId !== myUserId && m.platform !== 'landingpage'
+      })
       setOnlineMembers(filtered)
       setOnlineCount(filtered.length)
     })
 
     channel.bind('pusher:member_added', (member: any) => {
-      if (member.id === String(user.id) || member.info?.platform === 'landingpage') return
+      const myUserId = String(user.id)
+      const numericId = String(parseInt(member.id))
+      if (numericId === myUserId || member.info?.platform === 'landingpage') return
       const newMember: OnlineMember = { id: member.id, name: member.info?.name, email: member.info?.email, role: member.info?.role, platform: member.info?.platform }
       setOnlineMembers(prev => [...prev, newMember])
       setOnlineCount(prev => prev + 1)
@@ -158,10 +165,13 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
         return
       }
 
+      // Parse numeric ID from composite Pusher user_id (e.g. "1-frontend-shop" → "1")
+      const selectedNumericId = String(parseInt(selectedMember.id))
+
       // If a chat is selected, only show messages relevant to that conversation
       const isRelevant =
-        (newMsg.senderId === String(user.id) && newMsg.recipientId === selectedMember.id) ||
-        (newMsg.senderId === selectedMember.id && (newMsg.recipientId === String(user.id) || !newMsg.recipientId)) ||
+        (newMsg.senderId === String(user.id) && newMsg.recipientId === selectedNumericId) ||
+        (newMsg.senderId === selectedNumericId && (newMsg.recipientId === String(user.id) || !newMsg.recipientId)) ||
         (newMsg.senderId === String(user.id) && !newMsg.recipientId)
 
       if (isRelevant) {
