@@ -99,21 +99,14 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       members.each((m: any) => {
         list.push({ id: m.id, name: m.info?.name, email: m.info?.email, role: m.info?.role, platform: m.info?.platform })
       })
-      // Show only users from other platforms (not landingpage, not self)
-      // Pusher user_id is now "1-frontend-shop" format (id + platform suffix)
-      const myUserId = String(user.id)
-      const filtered = list.filter(m => {
-        const numericId = String(parseInt(m.id))
-        return numericId !== myUserId && m.platform !== 'landingpage'
-      })
+      // Filter ONLY by platform — show admins from other platforms even if same user
+      const filtered = list.filter(m => m.platform !== 'landingpage')
       setOnlineMembers(filtered)
       setOnlineCount(filtered.length)
     })
 
     channel.bind('pusher:member_added', (member: any) => {
-      const myUserId = String(user.id)
-      const numericId = String(parseInt(member.id))
-      if (numericId === myUserId || member.info?.platform === 'landingpage') return
+      if (member.info?.platform === 'landingpage') return
       const newMember: OnlineMember = { id: member.id, name: member.info?.name, email: member.info?.email, role: member.info?.role, platform: member.info?.platform }
       setOnlineMembers(prev => [...prev, newMember])
       setOnlineCount(prev => prev + 1)
