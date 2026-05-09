@@ -4,15 +4,20 @@ import { auth } from '@/lib/auth'
 const BACKEND_URL = (process.env.BACKEND_API_URL || 'https://jo-backend-shop.vercel.app').replace(/\/+$/, '')
 const SERVICE_TOKEN = process.env.BACKEND_SERVICE_PASSWORD || 'Joshop2024!BridgeSec#Xk9'
 
-// GET /api/admin-chat/messages — Fetch all admin chat messages
-export async function GET() {
+// GET /api/admin-chat/messages — Fetch admin chat messages (optionally filtered by recipientId)
+export async function GET(req: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const res = await fetch(`${BACKEND_URL}/chats/admin/messages`, {
+    // Forward recipientId query param if present
+    const { searchParams } = new URL(req.url)
+    const recipientId = searchParams.get('recipientId')
+    const queryParams = recipientId ? `?recipientId=${recipientId}` : ''
+
+    const res = await fetch(`${BACKEND_URL}/chats/admin/messages${queryParams}`, {
       headers: {
         'X-Service-Password': SERVICE_TOKEN,
         'X-Service-User-Email': session.user.email || '',
@@ -29,14 +34,15 @@ export async function GET() {
     const data = await res.json()
 
     // Backend returns { data: [...messages], pagination: {...} }
-    // Transform to format expected by frontend: { messages: [...formattedMessages] }
     const rawMessages = data.data || []
     const messages = rawMessages.map((msg: any) => ({
       id: String(msg.id),
       content: msg.content,
       senderId: String(msg.senderId),
       senderName: msg.sender?.name || 'Admin',
-      platform: msg.platform || 'unknown',
+      senderPlatform: msg.platform || 'unknown',
+      recipientId: msg.recipientId ? String(msg.recipientId) : null,
+      targetPlatform: msg.targetPlatform || 'all',
       senderRole: msg.sender?.email ? 'admin' : '',
       createdAt: msg.createdAt,
     }))
@@ -48,7 +54,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin-chat/messages — Send admin message
+// POST /api/admin-chat/messages — Send admin message (with optional recipientId + targetPlatform)
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()

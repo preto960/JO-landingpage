@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Send, Users, Circle, ArrowDown } from 'lucide-react'
+import { Send, Users, Circle, ArrowDown, ArrowLeft, Search } from 'lucide-react'
 import { getPusherClient } from '@/lib/pusher'
 import Pusher from 'pusher-js'
 
@@ -11,8 +11,18 @@ interface Message {
   senderId: string
   senderName: string
   senderRole: string
-  platform: string
+  senderPlatform: string
+  recipientId: string | null
+  targetPlatform: string
   createdAt: string
+}
+
+interface OnlineMember {
+  id: string
+  name?: string
+  email?: string
+  role?: string
+  platform?: string
 }
 
 interface AdminChatContentProps {
@@ -34,16 +44,19 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
   const [onlineCount, setOnlineCount] = useState(0)
   const [showMembers, setShowMembers] = useState(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
-  const [onlineMembers, setOnlineMembers] = useState<{ id: string; name?: string; role?: string }[]>([])
+  const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([])
+  const [selectedMember, setSelectedMember] = useState<OnlineMember | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const channelRef = useRef<any>(null)
 
-  // Fetch messages
+  // Fetch messages (filtered by recipient if one is selected)
   const fetchMessages = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/admin-chat/messages')
+      const params = selectedMember ? `?recipientId=${selectedMember.id}` : ''
+      const res = await fetch(`/api/admin-chat/messages${params}`)
       if (res.ok) {
         const data = await res.json()
         setMessages(data.messages || [])
@@ -53,7 +66,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedMember])
 
   useEffect(() => { fetchMessages() }, [fetchMessages])
 
@@ -69,20 +82,20 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
     channelRef.current = channel
 
     channel.bind('pusher:subscription_succeeded', (members: any) => {
-      const list: { id: string; name?: string; role?: string; platform?: string }[] = []
+      const list: OnlineMember[] = []
       members.each((m: any) => {
-        list.push({ id: m.id, name: m.info?.name, role: m.info?.role, platform: m.info?.platform })
+        list.push({ id: m.id, name: m.info?.name, email: m.info?.email, role: m.info?.role, platform: m.info?.platform })
       })
-      // Filter: show only users from other platforms (not landingpage, not self)
+      // Show only users from other platforms (not landingpage, not self)
       const filtered = list.filter(m => m.id !== String(user.id) && m.platform !== 'landingpage')
       setOnlineMembers(filtered)
       setOnlineCount(filtered.length)
     })
 
     channel.bind('pusher:member_added', (member: any) => {
-      // Only add if from other platform and not self
       if (member.id === String(user.id) || member.info?.platform === 'landingpage') return
-      setOnlineMembers(prev => [...prev, { id: member.id, name: member.info?.name, role: member.info?.role, platform: member.info?.platform }])
+      const newMember: OnlineMember = { id: member.id, name: member.info?.name, email: member.info?.email, role: member.info?.role, platform: member.info?.platform }
+      setOnlineMembers(prev => [...prev, newMember])
       setOnlineCount(prev => prev + 1)
     })
 
@@ -95,19 +108,41 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
     })
 
     channel.bind('new-message', (data: any) => {
-      setMessages(prev => {
-        const msg = {
-          id: String(data.id),
-          content: data.content,
-          senderId: String(data.senderId),
-          senderName: data.senderName || 'Admin',
-          platform: data.platform || 'unknown',
-          senderRole: 'admin',
-          createdAt: data.createdAt,
+      const newMsg: Message = {
+        id: String(data.id),
+        content: data.content,
+        senderId: String(data.senderId),
+        senderName: data.senderName || 'Admin',
+        senderPlatform: data.senderPlatform || data.platform || 'unknown',
+        recipientId: data.recipientId ? String(data.recipientId) : null,
+        targetPlatform: data.targetPlatform || 'all',
+        senderRole: 'admin',
+        createdAt: data.createdAt,
+      }
+
+      // If no chat is selected, only show broadcast messages
+      if (!selectedMember) {
+        if (!newMsg.recipientId) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMsg.id)) return prev
+            return [...prev, newMsg]
+          })
         }
-        if (prev.some(m => m.id === msg.id)) return prev
-        return [...prev, msg]
-      })
+        return
+      }
+
+      // If a chat is selected, only show messages relevant to that conversation
+      const isRelevant =
+        (newMsg.senderId === String(user.id) && newMsg.recipientId === selectedMember.id) ||
+        (newMsg.senderId === selectedMember.id && (newMsg.recipientId === String(user.id) || !newMsg.recipientId)) ||
+        (newMsg.senderId === String(user.id) && !newMsg.recipientId)
+
+      if (isRelevant) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === newMsg.id)) return prev
+          return [...prev, newMsg]
+        })
+      }
     })
 
     return () => {
@@ -117,7 +152,21 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       channel.unbind('new-message')
       pusher.unsubscribe('presence-admin-chat')
     }
-  }, [])
+  }, [user.id, selectedMember])
+
+  // Select a member to chat with
+  const openChat = (member: OnlineMember) => {
+    setSelectedMember(member)
+    setMessages([])
+    setInputText('')
+  }
+
+  // Go back to user list
+  const closeChat = () => {
+    setSelectedMember(null)
+    setMessages([])
+    setInputText('')
+  }
 
   // Send message
   const sendMessage = async () => {
@@ -126,10 +175,15 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
     setInputText('')
     setSending(true)
     try {
+      const body: any = { content }
+      if (selectedMember) {
+        body.recipientId = parseInt(selectedMember.id)
+        body.targetPlatform = selectedMember.platform || 'all'
+      }
       await fetch('/api/admin-chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(body),
       })
     } catch (err) {
       console.error('Error sending:', err)
@@ -153,16 +207,26 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
   }, [])
 
   useEffect(() => {
-    scrollToBottom()
+    if (isNearBottom()) scrollToBottom()
   }, [messages, scrollToBottom])
+
+  const isNearBottom = () => {
+    if (!messagesContainerRef.current) return true
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
+    return scrollHeight - scrollTop - clientHeight < 150
+  }
 
   // Detect if user scrolled up
   const handleScroll = () => {
     if (!messagesContainerRef.current) return
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 150
-    setShowScrollBtn(!isNearBottom)
+    setShowScrollBtn(!isNearBottom())
   }
+
+  // Filter members by search
+  const filteredMembers = onlineMembers.filter(m =>
+    (m.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (m.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   // Format time
   const formatTime = (dateStr: string) => {
@@ -183,6 +247,31 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       if (d.toDateString() === yesterday.toDateString()) return 'Ayer'
       return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
     } catch { return '' }
+  }
+
+  // Platform helpers
+  const getPlatformLabel = (platform?: string) => {
+    switch (platform) {
+      case 'landingpage': return 'Landing'
+      case 'frontend-shop': return 'Tienda'
+      case 'app-shop': return 'App Shop'
+      case 'app-delivery': return 'App Delivery'
+      default: return ''
+    }
+  }
+
+  const getPlatformColor = (platform?: string) => {
+    switch (platform) {
+      case 'landingpage': return '#C9A84C'
+      case 'frontend-shop': return '#3b82f6'
+      case 'app-shop': return '#22c55e'
+      case 'app-delivery': return '#f97316'
+      default: return 'rgba(245,240,232,.4)'
+    }
+  }
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
   // Group messages by date
@@ -218,6 +307,9 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
               {isConnected ? 'En linea' : 'Desconectado'}
             </span>
           </div>
+          <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)' }}>
+            {onlineCount} en linea
+          </span>
         </div>
 
         <button
@@ -227,186 +319,309 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
             background: showMembers ? 'rgba(201,168,76,.12)' : 'rgba(201,168,76,.06)',
             border: showMembers ? '1px solid rgba(201,168,76,.25)' : '1px solid rgba(201,168,76,.1)',
           }}
-          onMouseEnter={(e) => { if (!showMembers) e.currentTarget.style.background = 'rgba(201,168,76,.1)' }}
-          onMouseLeave={(e) => { if (!showMembers) e.currentTarget.style.background = 'rgba(201,168,76,.06)' }}
         >
           <Users className="w-3.5 h-3.5" style={{ color: '#C9A84C' }} />
           <span className="text-xs font-medium" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', letterSpacing: '.05em' }}>
-            {onlineCount} usuario{onlineCount !== 1 ? 's' : ''} conectado{onlineCount !== 1 ? 's' : ''}
+            {onlineCount}
           </span>
         </button>
       </div>
 
       {/* Main content: chat column + sidebar */}
       <div className="flex flex-1 min-h-0">
-        {/* Chat column */}
-        <div className="flex flex-col flex-1 min-h-0 relative">
-          {/* Messages area */}
-          <div
-            ref={messagesContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-            style={{ background: '#0A0A0A' }}
-          >
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-6 h-6 border border-[rgba(201,168,76,.3)] border-t-[#C9A84C] rounded-full animate-spin" />
-              <span className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)' }}>Cargando mensajes...</span>
-            </div>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,168,76,.06)', border: '1px solid rgba(201,168,76,.1)' }}>
-                <Users className="w-7 h-7" style={{ color: 'rgba(201,168,76,.4)' }} />
+
+        {/* ════════════════════════════════════════════════════════
+            VIEW 1: USER LIST (no chat selected)
+           ════════════════════════════════════════════════════════ */}
+        {!selectedMember ? (
+          <div className="flex flex-col flex-1 min-h-0" style={{ background: '#0A0A0A' }}>
+            {/* Search bar */}
+            <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(245,240,232,.06)' }}>
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-sm" style={{ background: 'rgba(245,240,232,.04)', border: '1px solid rgba(245,240,232,.06)' }}>
+                <Search className="w-4 h-4" style={{ color: 'rgba(245,240,232,.3)' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar administrador..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent text-sm outline-none"
+                  style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.85)', border: 'none' }}
+                />
               </div>
-              <p className="text-sm" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)' }}>
-                No hay mensajes
-              </p>
-              <p className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}>
-                Inicia una conversacion con el equipo de administracion
-              </p>
             </div>
-          </div>
-        ) : (
-          groupedMessages.map((group) => (
-            <div key={group.date}>
-              {/* Date separator */}
-              <div className="flex items-center justify-center my-4">
-                <div className="px-3 py-1 rounded-sm" style={{ background: 'rgba(245,240,232,.04)' }}>
-                  <span className="text-[10px] font-medium" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                    {formatDate(group.messages[0]?.createdAt || '')}
-                  </span>
+
+            {/* Members list */}
+            <div className="flex-1 overflow-y-auto py-2">
+              {filteredMembers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-8">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,168,76,.06)', border: '1px solid rgba(201,168,76,.1)' }}>
+                    <Users className="w-7 h-7" style={{ color: 'rgba(201,168,76,.4)' }} />
+                  </div>
+                  <p className="text-sm" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)' }}>
+                    {searchTerm ? 'No se encontraron administradores' : 'No hay administradores conectados'}
+                  </p>
+                  <p className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.25)' }}>
+                    {searchTerm ? 'Intenta con otro termino de busqueda' : 'Los administradores conectados desde frontend-shop o las apps apareceran aqui'}
+                  </p>
                 </div>
-              </div>
+              ) : (
+                filteredMembers.map((member) => {
+                  const memberName = member.name || member.email || 'Admin'
+                  const memberPlatform = member.platform || 'unknown'
+                  const platformColor = getPlatformColor(memberPlatform)
 
-              {/* Messages */}
-              {group.messages.map((msg) => {
-                const isOwn = msg.senderId === String(user.id)
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}
-                  >
-                    <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                      {/* Sender name (only for others) */}
-                      {!isOwn && (
-                        <div className="flex items-center gap-2 mb-1 ml-1">
-                          <span className="text-xs font-medium" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.6)' }}>
-                            {msg.senderName || 'Admin'}
-                          </span>
-                          {msg.senderRole && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', background: 'rgba(201,168,76,.08)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-                              {msg.senderRole}
-                            </span>
-                          )}
+                  return (
+                    <div
+                      key={member.id}
+                      onClick={() => openChat(member)}
+                      className="flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer"
+                      style={{ borderBottom: '1px solid rgba(245,240,232,.03)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(245,240,232,.03)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      {/* Avatar with online indicator */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${platformColor}15`, color: platformColor }}>
+                          {getInitials(memberName)}
                         </div>
-                      )}
-
-                      {/* Message bubble */}
-                      <div
-                        className="px-3.5 py-2.5"
-                        style={{
-                          background: isOwn
-                            ? 'linear-gradient(135deg, rgba(201,168,76,.15) 0%, rgba(201,168,76,.08) 100%)'
-                            : 'rgba(245,240,232,.05)',
-                          border: isOwn
-                            ? '1px solid rgba(201,168,76,.15)'
-                            : '1px solid rgba(245,240,232,.06)',
-                          borderRadius: '2px',
-                        }}
-                      >
-                        <p className="text-sm leading-relaxed" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.85)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                          {msg.content}
-                        </p>
+                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: '#22c55e', border: '2px solid #0A0A0A' }} />
                       </div>
 
-                      {/* Timestamp */}
-                      <div className={`mt-1 ${isOwn ? 'text-right mr-1' : 'ml-1'}`}>
-                        <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}>
-                          {formatTime(msg.createdAt)}
+                      {/* Name + platform */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.85)' }}>
+                          {memberName}
+                        </p>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-sm" style={{ fontFamily: "'Jost', sans-serif", color: platformColor, background: `${platformColor}10`, letterSpacing: '.05em', textTransform: 'uppercase' }}>
+                          {getPlatformLabel(memberPlatform)} · En linea
+                        </span>
+                      </div>
+
+                      {/* Arrow */}
+                      <div style={{ color: 'rgba(245,240,232,.2)', fontSize: 18 }}>›</div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Broadcast messages section (if any) */}
+            {!searchTerm && messages.length > 0 && (
+              <div style={{ borderTop: '1px solid rgba(245,240,232,.06)', maxHeight: 200, overflowY: 'auto' }}>
+                <div className="px-4 py-2 text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                  Mensajes recientes (general)
+                </div>
+                {messages.slice(-5).map((msg) => (
+                  <div key={msg.id} className="flex items-center gap-2 px-4 py-1.5">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm flex-shrink-0" style={{ fontFamily: "'Jost', sans-serif", color: getPlatformColor(msg.senderPlatform), background: `${getPlatformColor(msg.senderPlatform)}15`, letterSpacing: '.03em' }}>
+                      {msg.senderName.split(' ')[0]}
+                    </span>
+                    <span className="text-xs truncate flex-1" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)' }}>
+                      {msg.content}
+                    </span>
+                    <span className="text-[10px] flex-shrink-0" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}>
+                      {formatTime(msg.createdAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ════════════════════════════════════════════════════════
+              VIEW 2: CHAT CONVERSATION (member selected)
+             ════════════════════════════════════════════════════════ */
+          <div className="flex flex-col flex-1 min-h-0 relative" style={{ background: '#0A0A0A' }}>
+            {/* Chat header with back button */}
+            <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(245,240,232,.06)' }}>
+              <button
+                onClick={closeChat}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-sm transition-colors duration-150 cursor-pointer"
+                style={{ background: 'rgba(245,240,232,.06)', border: '1px solid rgba(245,240,232,.06)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(245,240,232,.1)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(245,240,232,.06)' }}
+              >
+                <ArrowLeft className="w-4 h-4" style={{ color: 'rgba(245,240,232,.6)' }} />
+              </button>
+
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: `${getPlatformColor(selectedMember.platform)}15`, color: getPlatformColor(selectedMember.platform) }}>
+                  {getInitials(selectedMember.name || 'Admin')}
+                </div>
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: '#22c55e', border: '2px solid #0A0A0A' }} />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.85)' }}>
+                  {selectedMember.name || selectedMember.email || 'Admin'}
+                </p>
+                <span className="text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: getPlatformColor(selectedMember.platform), letterSpacing: '.05em', textTransform: 'uppercase' }}>
+                  {getPlatformLabel(selectedMember.platform)} · En linea
+                </span>
+              </div>
+            </div>
+
+            {/* Messages area */}
+            <div
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-6 h-6 border border-[rgba(201,168,76,.3)] border-t-[#C9A84C] rounded-full animate-spin" />
+                    <span className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)' }}>Cargando mensajes...</span>
+                  </div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,168,76,.06)', border: '1px solid rgba(201,168,76,.1)' }}>
+                      <Users className="w-7 h-7" style={{ color: 'rgba(201,168,76,.4)' }} />
+                    </div>
+                    <p className="text-sm" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.5)' }}>
+                      Inicia una conversacion con {selectedMember.name || 'este administrador'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                groupedMessages.map((group) => (
+                  <div key={group.date}>
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center my-4">
+                      <div className="px-3 py-1 rounded-sm" style={{ background: 'rgba(245,240,232,.04)' }}>
+                        <span className="text-[10px] font-medium" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                          {formatDate(group.messages[0]?.createdAt || '')}
                         </span>
                       </div>
                     </div>
+
+                    {/* Messages */}
+                    {group.messages.map((msg) => {
+                      const isOwn = msg.senderId === String(user.id)
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}
+                        >
+                          <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                            {/* Sender name + platform (only for others) */}
+                            {!isOwn && (
+                              <div className="flex items-center gap-2 mb-1 ml-1">
+                                <span className="text-xs font-medium" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.6)' }}>
+                                  {msg.senderName || 'Admin'}
+                                </span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-sm" style={{ fontFamily: "'Jost', sans-serif", color: getPlatformColor(msg.senderPlatform), background: `${getPlatformColor(msg.senderPlatform)}10`, letterSpacing: '.05em', textTransform: 'uppercase' }}>
+                                  {getPlatformLabel(msg.senderPlatform)}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Message bubble */}
+                            <div
+                              className="px-3.5 py-2.5"
+                              style={{
+                                background: isOwn
+                                  ? 'linear-gradient(135deg, rgba(201,168,76,.15) 0%, rgba(201,168,76,.08) 100%)'
+                                  : 'rgba(245,240,232,.05)',
+                                border: isOwn
+                                  ? '1px solid rgba(201,168,76,.15)'
+                                  : '1px solid rgba(245,240,232,.06)',
+                                borderRadius: '2px',
+                              }}
+                            >
+                              <p className="text-sm leading-relaxed" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.85)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                {msg.content}
+                              </p>
+                            </div>
+
+                            {/* Timestamp */}
+                            <div className={`mt-1 ${isOwn ? 'text-right mr-1' : 'ml-1'}`}>
+                              <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}>
+                                {formatTime(msg.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                ))
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          ))
-        )}
 
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Scroll to bottom button */}
-      {showScrollBtn && messages.length > 0 && (
-        <button
-          onClick={() => scrollToBottom()}
-          className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 cursor-pointer"
-          style={{
-            background: 'rgba(201,168,76,.9)',
-            boxShadow: '0 4px 12px rgba(201,168,76,.3)',
-          }}
-        >
-          <ArrowDown className="w-3.5 h-3.5" style={{ color: '#0A0A0A' }} />
-          <span className="text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: '#0A0A0A', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-            Nuevo
-          </span>
-        </button>
-      )}
-
-      {/* Input area */}
-      <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(245,240,232,.06)', background: '#111111' }}>
-        <div className="flex items-end gap-3">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Escribe un mensaje..."
-            rows={1}
-            className="flex-1 resize-none px-3 py-2.5 text-sm outline-none transition-colors duration-200"
-            style={{
-              fontFamily: "'Jost', sans-serif",
-              color: 'rgba(245,240,232,.85)',
-              background: 'rgba(245,240,232,.04)',
-              border: '1px solid rgba(245,240,232,.08)',
-              borderRadius: '2px',
-              minHeight: '40px',
-              maxHeight: '120px',
-            }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.3)' }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.08)' }}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!inputText.trim() || sending}
-            className="flex items-center justify-center w-10 h-10 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
-            style={{
-              background: inputText.trim() && !sending
-                ? 'linear-gradient(135deg, #C9A84C 0%, #B8953E 100%)'
-                : 'rgba(245,240,232,.06)',
-              borderRadius: '2px',
-              opacity: inputText.trim() && !sending ? 1 : 0.5,
-            }}
-          >
-            {sending ? (
-              <div className="w-4 h-4 border border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" style={{ color: inputText.trim() ? '#0A0A0A' : 'rgba(245,240,232,.3)', transform: 'rotate(-45deg)' }} />
+            {/* Scroll to bottom button */}
+            {showScrollBtn && messages.length > 0 && (
+              <button
+                onClick={() => scrollToBottom()}
+                className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-sm transition-all duration-200 hover:scale-105 cursor-pointer"
+                style={{
+                  background: 'rgba(201,168,76,.9)',
+                  boxShadow: '0 4px 12px rgba(201,168,76,.3)',
+                }}
+              >
+                <ArrowDown className="w-3.5 h-3.5" style={{ color: '#0A0A0A' }} />
+                <span className="text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: '#0A0A0A', letterSpacing: '.05em', textTransform: 'uppercase' }}>
+                  Nuevo
+                </span>
+              </button>
             )}
-          </button>
-        </div>
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}>
-            {user.name} &middot; {user.role}
-          </span>
-          <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.15)' }}>
-            Enter para enviar &middot; Shift+Enter nueva linea
-          </span>
-        </div>
-        </div>
-        </div>
+
+            {/* Input area */}
+            <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(245,240,232,.06)', background: '#111111' }}>
+              <div className="flex items-end gap-3">
+                <textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={`Escribe un mensaje a ${selectedMember.name || 'admin'}...`}
+                  rows={1}
+                  className="flex-1 resize-none px-3 py-2.5 text-sm outline-none transition-colors duration-200"
+                  style={{
+                    fontFamily: "'Jost', sans-serif",
+                    color: 'rgba(245,240,232,.85)',
+                    background: 'rgba(245,240,232,.04)',
+                    border: '1px solid rgba(245,240,232,.08)',
+                    borderRadius: '2px',
+                    minHeight: '40px',
+                    maxHeight: '120px',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,.3)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(245,240,232,.08)' }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!inputText.trim() || sending}
+                  className="flex items-center justify-center w-10 h-10 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+                  style={{
+                    background: inputText.trim() && !sending
+                      ? 'linear-gradient(135deg, #C9A84C 0%, #B8953E 100%)'
+                      : 'rgba(245,240,232,.06)',
+                    borderRadius: '2px',
+                    opacity: inputText.trim() && !sending ? 1 : 0.5,
+                  }}
+                >
+                  {sending ? (
+                    <div className="w-4 h-4 border border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" style={{ color: inputText.trim() ? '#0A0A0A' : 'rgba(245,240,232,.3)', transform: 'rotate(-45deg)' }} />
+                  )}
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.2)' }}>
+                  {user.name} · {user.role}
+                </span>
+                <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.15)' }}>
+                  Enter para enviar · Shift+Enter nueva linea
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Online members sidebar */}
         <div
@@ -442,32 +657,33 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
                 </div>
               ) : (
                 onlineMembers.map((member) => {
-                  const isCurrentUser = member.id === user.id
                   const memberName = member.name || 'Admin'
-                  const memberRole = member.role || 'admin'
-                  const initials = memberName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                  const memberPlatform = member.platform || 'unknown'
+                  const platformColor = getPlatformColor(memberPlatform)
+                  const isSelected = selectedMember?.id === member.id
 
                   return (
                     <div
                       key={member.id}
-                      className="flex items-center gap-2.5 px-4 py-2 transition-colors duration-150"
-                      style={{ background: isCurrentUser ? 'rgba(201,168,76,.06)' : 'transparent' }}
-                      onMouseEnter={(e) => { if (!isCurrentUser) e.currentTarget.style.background = 'rgba(245,240,232,.03)' }}
-                      onMouseLeave={(e) => { if (!isCurrentUser) e.currentTarget.style.background = 'transparent' }}
+                      onClick={() => openChat(member)}
+                      className="flex items-center gap-2.5 px-4 py-2 transition-colors duration-150 cursor-pointer"
+                      style={{ background: isSelected ? 'rgba(201,168,76,.06)' : 'transparent' }}
+                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(245,240,232,.03)' }}
+                      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
                     >
                       <div className="relative flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'rgba(201,168,76,.12)', color: '#C9A84C' }}>
-                          {initials}
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: `${platformColor}15`, color: platformColor }}>
+                          {getInitials(memberName)}
                         </div>
                         <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full" style={{ background: '#22c55e', border: '2px solid #111111' }} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium truncate" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.7)' }}>
                           {memberName}
-                          {isCurrentUser && <span style={{ color: 'rgba(245,240,232,.3)', fontWeight: 400 }}> (Tu)</span>}
+                          {isSelected && <span style={{ color: 'rgba(245,240,232,.3)', fontWeight: 400 }}> (Chat)</span>}
                         </p>
-                        <span className="text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', letterSpacing: '.03em', textTransform: 'uppercase' }}>
-                          {memberRole}
+                        <span className="text-[10px] font-semibold" style={{ fontFamily: "'Jost', sans-serif", color: platformColor, letterSpacing: '.03em', textTransform: 'uppercase' }}>
+                          {getPlatformLabel(memberPlatform)}
                         </span>
                       </div>
                     </div>
