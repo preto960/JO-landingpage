@@ -17,6 +17,7 @@ interface ChatMessage {
   content: string
   senderId: string
   senderName: string
+  senderEmail: string
   senderPlatform: string
   recipientId: string | null
   targetPlatform: string
@@ -47,7 +48,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const myUserId = String(user.id)
+  const myUserEmail = user.email
 
   // Pusher subscription (once — connection + presence events)
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
       // Must match BOTH platform AND targetPlatform to isolate conversations
       const isFromSelected =
         (numericSenderId === selectedNumericId && senderPlatform === selectedMember.platform && targetPlatform === 'landingpage') ||
-        (numericSenderId === myUserId && senderPlatform === 'landingpage' && targetPlatform === selectedMember.platform)
+        (data.senderEmail === myUserEmail && senderPlatform === 'landingpage' && targetPlatform === selectedMember.platform)
 
       if (isFromSelected) {
         setMessages(prev => {
@@ -135,6 +136,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
             content: data.content,
             senderId: numericSenderId,
             senderName: data.senderName || 'Admin',
+            senderEmail: data.senderEmail || '',
             senderPlatform: data.senderPlatform || 'unknown',
             recipientId: numericRecipientId,
             targetPlatform: data.targetPlatform || 'all',
@@ -146,7 +148,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
     channel.bind('new-message', handleNewMessage)
     return () => channel.unbind('new-message', handleNewMessage)
-  }, [selectedMember, myUserId])
+  }, [selectedMember, myUserEmail])
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -178,6 +180,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
         content: msg.content,
         senderId: String(msg.senderId),
         senderName: msg.senderName || 'Admin',
+        senderEmail: msg.senderEmail || '',
         senderPlatform: msg.senderPlatform || 'unknown',
         recipientId: msg.recipientId ? String(msg.recipientId) : null,
         targetPlatform: msg.targetPlatform || 'all',
@@ -233,7 +236,8 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
             id: String(savedMsg.id),
             content: savedMsg.content,
             senderId: String(savedMsg.senderId),
-            senderName: savedMsg.senderName || 'Admin',
+            senderName: savedMsg.senderName || savedMsg.sender?.name || 'Admin',
+            senderEmail: savedMsg.senderEmail || savedMsg.sender?.email || '',
             senderPlatform: 'landingpage',
             recipientId: savedMsg.recipientId ? String(savedMsg.recipientId) : null,
             targetPlatform: savedMsg.targetPlatform || 'all',
@@ -382,7 +386,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
                   </div>
                 ) : (
                   messages.map((msg) => {
-                    const isMine = msg.senderId === myUserId && msg.senderPlatform === 'landingpage'
+                    const isMine = msg.senderEmail === myUserEmail && msg.senderPlatform === 'landingpage'
                     return (
                       <div key={msg.id} className="flex" style={{ justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
                         <div

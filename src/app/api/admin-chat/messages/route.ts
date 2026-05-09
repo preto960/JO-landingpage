@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
       content: msg.content,
       senderId: String(msg.senderId),
       senderName: msg.sender?.name || 'Admin',
+      senderEmail: msg.sender?.email || '',
       senderPlatform: msg.platform || 'unknown',
       recipientId: msg.recipientId ? String(msg.recipientId) : null,
       targetPlatform: msg.targetPlatform || 'all',
