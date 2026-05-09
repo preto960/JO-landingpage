@@ -48,7 +48,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const myUserEmail = user.email
+  const MY_PLATFORM = 'landingpage'
 
   // Pusher subscription (once — connection + presence events)
   useEffect(() => {
@@ -125,8 +125,8 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
       // Must match BOTH platform AND targetPlatform to isolate conversations
       const isFromSelected =
-        (numericSenderId === selectedNumericId && senderPlatform === selectedMember.platform && targetPlatform === 'landingpage') ||
-        (data.senderEmail === myUserEmail && senderPlatform === 'landingpage' && targetPlatform === selectedMember.platform)
+        (numericSenderId === selectedNumericId && senderPlatform === selectedMember.platform && targetPlatform === MY_PLATFORM) ||
+        (senderPlatform === MY_PLATFORM && targetPlatform === selectedMember.platform)
 
       if (isFromSelected) {
         setMessages(prev => {
@@ -148,7 +148,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
 
     channel.bind('new-message', handleNewMessage)
     return () => channel.unbind('new-message', handleNewMessage)
-  }, [selectedMember, myUserEmail])
+  }, [selectedMember])
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -386,7 +386,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
                   </div>
                 ) : (
                   messages.map((msg) => {
-                    const isMine = msg.senderEmail === myUserEmail && msg.senderPlatform === 'landingpage'
+                    const isMine = msg.senderPlatform === MY_PLATFORM
                     return (
                       <div key={msg.id} className="flex" style={{ justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
                         <div
