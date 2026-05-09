@@ -361,7 +361,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
                   </div>
                 ) : (
                   messages.map((msg) => {
-                    const isMine = msg.senderId === myUserId
+                    const isMine = msg.senderId === myUserId && msg.senderPlatform === 'landingpage'
                     return (
                       <div key={msg.id} className="flex" style={{ justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
                         <div
