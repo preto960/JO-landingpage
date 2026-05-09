@@ -16,6 +16,7 @@ export async function GET() {
       headers: {
         'X-Service-Password': SERVICE_TOKEN,
         'X-Service-User-Email': session.user.email || '',
+        'X-Platform': 'landingpage',
         'Content-Type': 'application/json',
       },
     })
@@ -35,6 +36,7 @@ export async function GET() {
       content: msg.content,
       senderId: String(msg.senderId),
       senderName: msg.sender?.name || 'Admin',
+      platform: msg.platform || 'unknown',
       senderRole: msg.sender?.email ? 'admin' : '',
       createdAt: msg.createdAt,
     }))
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'X-Service-Password': SERVICE_TOKEN,
         'X-Service-User-Email': session.user.email || '',
+        'X-Platform': 'landingpage',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

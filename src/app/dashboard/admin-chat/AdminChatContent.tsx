@@ -11,6 +11,7 @@ interface Message {
   senderId: string
   senderName: string
   senderRole: string
+  platform: string
   createdAt: string
 }
 
@@ -100,6 +101,7 @@ export default function AdminChatContent({ user }: AdminChatContentProps) {
           content: data.content,
           senderId: String(data.senderId),
           senderName: data.senderName || 'Admin',
+          platform: data.platform || 'unknown',
           senderRole: 'admin',
           createdAt: data.createdAt,
         }
