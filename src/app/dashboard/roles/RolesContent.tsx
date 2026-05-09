@@ -30,9 +30,6 @@ const MODULE_LABELS: Record<string, string> = {
   audit: 'Auditoría',
   roles: 'Roles',
   'admin-chat': 'Chat Admin',
-  delivery: 'Delivery',
-  tracking: 'Tracking',
-  batches: 'Lotes',
 }
 
 const MODULE_COLORS: Record<string, string> = {
@@ -44,9 +41,6 @@ const MODULE_COLORS: Record<string, string> = {
   audit: 'rgba(245,240,232,.5)',
   roles: '#f87171',
   'admin-chat': '#ec4899',
-  delivery: '#f59e0b',
-  tracking: '#06b6d4',
-  batches: '#8b5cf6',
 }
 
 const cardStyle: React.CSSProperties = {

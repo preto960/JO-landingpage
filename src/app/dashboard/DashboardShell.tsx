@@ -34,7 +34,7 @@ const allSidebarItems: SidebarItem[] = [
   { label: 'Panel', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard.view' },
   { label: 'Sistemas', icon: Package, href: '/dashboard/products', permission: 'products.view' },
   { label: 'Pedidos', icon: ShoppingCart, href: '/dashboard/orders', permission: 'orders.view' },
-  { label: 'Chat Admin', icon: MessageCircle, href: '/dashboard/admin-chat', adminOnly: true },
+  { label: 'Chat Admin', icon: MessageCircle, href: '/dashboard/admin-chat', permission: 'admin-chat.view' },
   { label: 'Configuracion', icon: SlidersHorizontal, href: '/dashboard/config', permission: 'settings.view' },
 ]
 

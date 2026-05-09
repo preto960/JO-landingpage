@@ -22,6 +22,8 @@ export const PERM = {
   AUDIT_VIEW: 'audit.view',
   ROLES_VIEW: 'roles.view',
   ROLES_MANAGE: 'roles.manage',
+  ADMIN_CHAT_VIEW: 'admin-chat.view',
+  ADMIN_CHAT_SEND: 'admin-chat.send',
 } as const
 
 export type PermissionName = (typeof PERM)[keyof typeof PERM]

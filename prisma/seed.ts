@@ -28,6 +28,9 @@ const PERMISSIONS = [
   { name: 'settings.edit', label: 'Editar Configuración', module: 'settings', description: 'Modificar la configuración' },
   // Audit
   { name: 'audit.view', label: 'Ver Auditoría', module: 'audit', description: 'Consultar logs de auditoría' },
+  // Admin Chat
+  { name: 'admin-chat.view', label: 'Ver Chat Admin', module: 'admin-chat', description: 'Permite ver el chat de administradores' },
+  { name: 'admin-chat.send', label: 'Enviar Chat Admin', module: 'admin-chat', description: 'Permite enviar mensajes al chat de administradores' },
 ]
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
