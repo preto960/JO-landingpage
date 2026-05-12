@@ -3,6 +3,11 @@
 import V2Nav from './V2Nav'
 import V2Hero from './V2Hero'
 import V2TrustBar from './V2TrustBar'
+import V2Problem from './V2Problem'
+import V2Services from './V2Services'
+import V2HowItWorks from './V2HowItWorks'
+import V2Benefits from './V2Benefits'
+import V2Comparison from './V2Comparison'
 import V2Footer from './V2Footer'
 
 /**
@@ -15,9 +20,11 @@ export default function V2Presentation() {
       <V2Nav />
       <V2Hero />
       <V2TrustBar />
-      {/* Phase 3 sections will be added here:
-          V2Problem, V2Services, V2HowItWorks, V2Benefits, V2Comparison
-      */}
+      <V2Problem />
+      <V2Services />
+      <V2HowItWorks />
+      <V2Benefits />
+      <V2Comparison />
       {/* Phase 4 sections will be added here:
           V2Testimonials, V2Platforms, V2Pricing, V2FAQ, V2CTA
       */}
