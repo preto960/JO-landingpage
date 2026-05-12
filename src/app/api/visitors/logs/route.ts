@@ -1,10 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api-auth'
+import { Prisma } from '@prisma/client'
+
+// Ensure the visitor_logs table exists (fallback if prisma db push didn't run)
+let tableEnsured = false
+async function ensureTable() {
+  if (tableEnsured) return
+  try {
+    await db.visitorLog.count()
+    tableEnsured = true
+  } catch {
+    try {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "visitor_logs" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "ip_address" TEXT NOT NULL DEFAULT '',
+          "country" TEXT,
+          "city" TEXT,
+          "region" TEXT,
+          "browser" TEXT,
+          "os" TEXT,
+          "device" TEXT,
+          "page" TEXT NOT NULL DEFAULT '/',
+          "referer" TEXT,
+          "user_agent" TEXT,
+          "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS "visitor_logs_created_at_idx" ON "visitor_logs"("created_at");
+        CREATE INDEX IF NOT EXISTS "visitor_logs_country_idx" ON "visitor_logs"("country");
+        CREATE INDEX IF NOT EXISTS "visitor_logs_ip_address_idx" ON "visitor_logs"("ip_address");
+      `)
+      tableEnsured = true
+    } catch (err) {
+      console.error('[VisitorLogs] Failed to create table:', err)
+    }
+  }
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth({ permission: 'visitor-logs.view' })
   if (!auth.success) return auth.response
+
+  await ensureTable()
 
   try {
     const { searchParams } = new URL(request.url)
@@ -61,6 +99,9 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('[VisitorLogs GET] Error:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
+      return NextResponse.json({ logs: [], total: 0, pages: 0, countries: [] })
+    }
     return NextResponse.json({ error: 'Error al obtener logs' }, { status: 500 })
   }
 }
@@ -85,6 +126,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ deleted: count })
   } catch (error) {
     console.error('[VisitorLogs DELETE] Error:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
+      return NextResponse.json({ deleted: 0 })
+    }
     return NextResponse.json({ error: 'Error al eliminar logs' }, { status: 500 })
   }
 }
