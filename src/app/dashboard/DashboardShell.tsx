@@ -107,6 +107,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/dashboard/users': 'Usuarios',
   '/dashboard/roles': 'Roles',
   '/dashboard/visitor-logs': 'Visitor Logs',
+  '/dashboard/appearance': 'Apariencia',
   '/dashboard/profile': 'Mi Perfil',
 }
 
@@ -138,7 +139,7 @@ export default function DashboardShell({
         </div>
         <nav className="flex-1 px-2 py-6 space-y-1 overflow-y-auto">
           {visibleItems.map(item => (
-            <NavItem key={item.label} item={item} isActive={item.href === '/dashboard/config' ? pathname.startsWith('/dashboard/config') || ['/dashboard/users', '/dashboard/roles', '/dashboard/visitor-logs', '/dashboard/profile'].includes(pathname) : pathname === item.href} pathname={pathname} />
+            <NavItem key={item.label} item={item} isActive={item.href === '/dashboard/config' ? pathname.startsWith('/dashboard/config') || ['/dashboard/users', '/dashboard/roles', '/dashboard/visitor-logs', '/dashboard/appearance', '/dashboard/profile'].includes(pathname) : pathname === item.href} pathname={pathname} />
           ))}
         </nav>
         <div style={{ borderTop: '1px solid rgba(245,240,232,.06)' }} className="p-4">
@@ -180,7 +181,7 @@ export default function DashboardShell({
                 </div>
                 <nav className="px-2 py-6 space-y-1">
                   {visibleItems.map(item => (
-                    <NavItem key={item.label} item={item} isActive={item.href === '/dashboard/config' ? pathname.startsWith('/dashboard/config') || ['/dashboard/users', '/dashboard/roles', '/dashboard/visitor-logs', '/dashboard/profile'].includes(pathname) : pathname === item.href} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
+                    <NavItem key={item.label} item={item} isActive={item.href === '/dashboard/config' ? pathname.startsWith('/dashboard/config') || ['/dashboard/users', '/dashboard/roles', '/dashboard/visitor-logs', '/dashboard/appearance', '/dashboard/profile'].includes(pathname) : pathname === item.href} pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
                   ))}
                 </nav>
               </SheetContent>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Shield, ShieldCheck, ChevronRight, Eye } from 'lucide-react'
+import { Shield, ShieldCheck, ChevronRight, Eye, Palette } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 
 type ConfigCard = {
@@ -38,6 +38,14 @@ const configCards: ConfigCard[] = [
     href: '/dashboard/visitor-logs',
     permission: 'visitor-logs.view',
     accent: '#C9A84C',
+  },
+  {
+    title: 'Apariencia',
+    description: 'Selecciona el diseño visual de tu landing page. Cambia entre templates disponibles y personaliza la estética del sitio.',
+    icon: Palette,
+    href: '/dashboard/appearance',
+    permission: 'appearance.edit',
+    accent: '#60a5fa',
   },
 ]
 

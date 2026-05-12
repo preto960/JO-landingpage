@@ -44,6 +44,7 @@ async function ensurePermissions() {
       { name: 'admin-chat.send', label: 'Enviar Chat Admin', module: 'admin-chat', description: 'Permite enviar mensajes al chat de administradores' },
       { name: 'visitor-logs.view', label: 'Ver Visitor Logs', module: 'visitor-logs', description: 'Permite ver los registros de visitas' },
       { name: 'visitor-logs.delete', label: 'Eliminar Visitor Logs', module: 'visitor-logs', description: 'Permite eliminar registros de visitas' },
+      { name: 'appearance.edit', label: 'Editar Apariencia', module: 'appearance', description: 'Permite cambiar el template y apariencia del sitio' },
     ]
     for (const perm of perms) {
       const created = await db.permission.upsert({

@@ -1,8 +1,8 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import VisitorLogsContent from './VisitorLogsContent'
+import AppearanceContent from './AppearanceContent'
 
-export default async function VisitorLogsPage() {
+export default async function AppearancePage() {
   const session = await auth()
   const user = session?.user
 
@@ -10,5 +10,5 @@ export default async function VisitorLogsPage() {
     redirect('/login')
   }
 
-  return <VisitorLogsContent user={user} />
+  return <AppearanceContent user={user} />
 }
