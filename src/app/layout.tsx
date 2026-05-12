@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import AuthProvider from "@/components/AuthProvider";
+import VisitorTracker from "@/components/VisitorTracker";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -50,6 +51,7 @@ export default function RootLayout({
         className={`${cormorant.variable} ${jost.variable} antialiased`}
       >
         <AuthProvider>
+          <VisitorTracker />
           {children}
           <Toaster />
         </AuthProvider>

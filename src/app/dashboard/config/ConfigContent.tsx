@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Shield, ShieldCheck, ChevronRight } from 'lucide-react'
+import { Shield, ShieldCheck, ChevronRight, Eye } from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 
 type ConfigCard = {
@@ -30,6 +30,14 @@ const configCards: ConfigCard[] = [
     href: '/dashboard/roles',
     permission: 'roles.view',
     accent: '#22c55e',
+  },
+  {
+    title: 'Visitor Logs',
+    description: 'Registro de visitas a tu landing page. Monitorea IP, ubicacion, navegador y dispositivo de cada visitante.',
+    icon: Eye,
+    href: '/dashboard/visitor-logs',
+    permission: 'visitor-logs.view',
+    accent: '#C9A84C',
   },
 ]
 

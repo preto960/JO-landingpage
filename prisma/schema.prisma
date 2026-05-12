@@ -153,3 +153,25 @@ model Order {
 
   @@map("orders")
 }
+
+// ─── Analytics Tables ────────────────────────────────────
+
+model VisitorLog {
+  id        String   @id @default(cuid())
+  ipAddress String   @map("ip_address")
+  country   String?
+  city      String?
+  region    String?
+  browser   String?
+  os        String?
+  device    String?
+  page      String   @default("/")
+  referer   String?
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([country])
+  @@index([ipAddress])
+  @@map("visitor_logs")
+}

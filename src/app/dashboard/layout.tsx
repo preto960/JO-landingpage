@@ -9,6 +9,8 @@ async function ensurePermissions() {
     const perms = [
       { name: 'admin-chat.view', label: 'Ver Chat Admin', module: 'admin-chat', description: 'Permite ver el chat de administradores' },
       { name: 'admin-chat.send', label: 'Enviar Chat Admin', module: 'admin-chat', description: 'Permite enviar mensajes al chat de administradores' },
+      { name: 'visitor-logs.view', label: 'Ver Visitor Logs', module: 'visitor-logs', description: 'Permite ver los registros de visitas' },
+      { name: 'visitor-logs.delete', label: 'Eliminar Visitor Logs', module: 'visitor-logs', description: 'Permite eliminar registros de visitas' },
     ]
     for (const perm of perms) {
       const created = await db.permission.upsert({
