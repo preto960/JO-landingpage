@@ -8,6 +8,11 @@ import V2Services from './V2Services'
 import V2HowItWorks from './V2HowItWorks'
 import V2Benefits from './V2Benefits'
 import V2Comparison from './V2Comparison'
+import V2Testimonials from './V2Testimonials'
+import V2Platforms from './V2Platforms'
+import V2Pricing from './V2Pricing'
+import V2FAQ from './V2FAQ'
+import V2CTA from './V2CTA'
 import V2Footer from './V2Footer'
 
 /**
@@ -25,10 +30,12 @@ export default function V2Presentation() {
       <V2HowItWorks />
       <V2Benefits />
       <V2Comparison />
-      {/* Phase 4 sections will be added here:
-          V2Testimonials, V2Platforms, V2Pricing, V2FAQ, V2CTA
-      */}
-      {/* Phase 5 sections will be added here:
+      <V2Testimonials />
+      <V2Platforms />
+      <V2Pricing />
+      <V2FAQ />
+      <V2CTA />
+      {/* Phase 5 elements will be added here:
           WhatsAppFloat, StickyMobileCTA, SocialProofToast, ExitIntent
       */}
       <V2Footer />
