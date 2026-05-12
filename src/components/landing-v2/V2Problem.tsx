@@ -29,7 +29,7 @@ const problems = [
   },
 ];
 
-export default function V2Problem() {
+export default function V2Problem({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 

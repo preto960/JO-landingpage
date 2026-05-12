@@ -26,7 +26,7 @@ const selectBase: React.CSSProperties = {
   cursor: 'pointer',
 }
 
-export default function V2CTA() {
+export default function V2CTA({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const [nombre, setNombre] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
   const [tipoNegocio, setTipoNegocio] = useState('')

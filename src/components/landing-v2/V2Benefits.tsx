@@ -35,7 +35,7 @@ const BENEFITS = [
   },
 ] as const
 
-export default function V2Benefits() {
+export default function V2Benefits({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 

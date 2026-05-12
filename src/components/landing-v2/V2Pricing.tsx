@@ -350,7 +350,7 @@ function PricingCard({
 /* ═══════════════════════════════════════════
    V2Pricing — Main Export
    ═══════════════════════════════════════════ */
-export default function V2Pricing() {
+export default function V2Pricing({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 

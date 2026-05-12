@@ -1,6 +1,6 @@
 'use client'
 
-export default function V2Footer() {
+export default function V2Footer({ primary = '#C9A84C', logoUrl }: { primary?: string; logoUrl?: string | null } = {}) {
   return (
     <footer style={{
       background: '#0A0A0A',

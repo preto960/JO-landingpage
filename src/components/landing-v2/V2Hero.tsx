@@ -496,7 +496,7 @@ function PhoneMockup({ mobile }: { mobile: boolean }) {
 /* ═══════════════════════════════════════════
    V2Hero — Main Export
    ═══════════════════════════════════════════ */
-export default function V2Hero() {
+export default function V2Hero({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const mobile = useIsMobile()
   const styles = mq(mobile)
 

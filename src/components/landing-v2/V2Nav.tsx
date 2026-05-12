@@ -47,7 +47,7 @@ function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function V2Nav() {
+export default function V2Nav({ primary = '#C9A84C', logoUrl }: { primary?: string; logoUrl?: string | null } = {}) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [drawerReady, setDrawerReady] = useState(false) // controls CSS class mount
@@ -244,14 +244,18 @@ export default function V2Nav() {
             fontFamily: "'Cormorant Garamond', serif",
             fontSize: '22px',
             fontWeight: 600,
-            color: '#C9A84C',
+            color: primary,
             letterSpacing: '.06em',
             textDecoration: 'none',
             lineHeight: 1,
             userSelect: 'none',
           }}
         >
-          JO
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" style={{ height: 28 }} />
+          ) : (
+            'JO'
+          )}
         </a>
 
         {/* ---- CENTER LINKS (desktop) ---- */}
@@ -347,7 +351,7 @@ export default function V2Nav() {
               letterSpacing: '.08em',
               textTransform: 'uppercase' as const,
               color: '#0A0A0A',
-              background: '#C9A84C',
+              background: primary,
               border: 'none',
               borderRadius: '4px',
               padding: '8px 22px',

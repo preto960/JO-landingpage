@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Palette, Check, Monitor, Smartphone, Globe, Loader2, ArrowLeft, RotateCcw } from 'lucide-react'
+import {
+  Palette, Check, Monitor, Globe, Loader2, ArrowLeft, RotateCcw,
+  Image as ImageIcon, Upload, X, Eye, EyeOff, Pipette, Info, Save
+} from 'lucide-react'
 import { PermissionGate } from '@/components/rbac/PermissionGate'
 
 type TemplateInfo = {
@@ -38,28 +41,48 @@ const TEMPLATES: TemplateInfo[] = [
       'Paleta: Oscuro + Dorado sólido + Acentos modernos',
       'Fuentes: Jost principal, Cormorant decorativo',
       'Secciones: Hero con mockup, Precios, FAQ, Testimonios',
-      'Elementos: WhatsApp flotante, sticky CTA, social proof',
+      'Elementos: WhatsApp flotante, sticky CTA',
     ],
   },
 ]
 
+// ─── Section config for V2 template ─────────────────
+type SectionToggle = {
+  key: string
+  label: string
+  description: string
+  defaultOn: boolean
+}
+
+const V2_SECTIONS: SectionToggle[] = [
+  { key: 'show_testimonials', label: 'Testimonios', description: 'Sección de testimonios de clientes (mostrar solo cuando tengas testimonios reales)', defaultOn: false },
+]
+
 export default function AppearanceContent({ user }: { user: { name: string; email: string; role?: string; permissions?: string[] } }) {
   const router = useRouter()
-  const [activeTemplate, setActiveTemplate] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Config state
+  const [config, setConfig] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  // Upload state
+  const [uploading, setUploading] = useState(false)
+
+  // Active section tab
+  const [activeTab, setActiveTab] = useState<'template' | 'colors' | 'branding' | 'sections'>('template')
 
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/site-config')
       if (res.ok) {
         const data = await res.json()
-        setActiveTemplate(data.template || 'v1-luxury')
+        setConfig(data)
       }
     } catch {
-      // Use default
-      setActiveTemplate('v1-luxury')
+      // ignore
     } finally {
       setLoading(false)
     }
@@ -69,36 +92,60 @@ export default function AppearanceContent({ user }: { user: { name: string; emai
     fetchConfig()
   }, [fetchConfig])
 
-  const handleSelectTemplate = async (templateId: string) => {
-    if (templateId === activeTemplate) return
+  const updateConfig = async (key: string, value: string) => {
+    setConfig(prev => ({ ...prev, [key]: value }))
     setSaving(true)
-    setSaved(false)
-
     try {
-      const res = await fetch('/api/site-config', {
+      await fetch('/api/site-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'template', value: templateId }),
+        body: JSON.stringify({ key, value }),
       })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch { /* ignore */ }
+    finally { setSaving(false) }
+  }
 
+  const handleSelectTemplate = async (templateId: string) => {
+    if (templateId === config.template) return
+    await updateConfig('template', templateId)
+  }
+
+  const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/site-assets', { method: 'POST', body: formData })
       if (res.ok) {
-        setActiveTemplate(templateId)
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
+        const data = await res.json()
+        await updateConfig('site_logo', data.url)
       }
-    } catch {
-      // Error handled silently
-    } finally {
-      setSaving(false)
+    } catch { /* ignore */ }
+    finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
+  const removeLogo = () => {
+    updateConfig('site_logo', '')
+  }
+
+  // ─── Section toggles only make sense when V2 is active ───
+  const isV2 = config.template === 'v2-modern'
+
+  // ─── Loading ───
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#C9A84C' }} />
-          <span className="text-xs" style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.4)', letterSpacing: '.05em' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <Loader2 className="animate-spin" style={{ width: 24, height: 24, color: '#C9A84C' }} />
+          <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 12, color: 'rgba(245,240,232,.4)', letterSpacing: '.05em' }}>
             Cargando configuración...
           </span>
         </div>
@@ -106,235 +153,368 @@ export default function AppearanceContent({ user }: { user: { name: string; emai
     )
   }
 
+  // ─── Tab button style ───
+  const tabBtn = (tabId: 'template' | 'colors' | 'branding' | 'sections', label: string, icon: any) => {
+    const isActive = activeTab === tabId
+    const Icon = icon
+    return (
+      <button
+        onClick={() => setActiveTab(tabId)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '8px 14px',
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 11,
+          letterSpacing: '.08em',
+          textTransform: 'uppercase',
+          color: isActive ? '#C9A84C' : 'rgba(245,240,232,.35)',
+          background: isActive ? 'rgba(201,168,76,.06)' : 'transparent',
+          border: isActive ? '1px solid rgba(201,168,76,.15)' : '1px solid transparent',
+          borderRadius: 4,
+          cursor: 'pointer',
+          transition: 'all .2s ease',
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive) e.currentTarget.style.color = 'rgba(245,240,232,.6)'
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) e.currentTarget.style.color = 'rgba(245,240,232,.35)'
+        }}
+      >
+        <Icon style={{ width: 14, height: 14, strokeWidth: 1.5 }} />
+        {label}
+      </button>
+    )
+  }
+
+  // ─── Color picker input ───
+  const colorField = (label: string, key: string, description: string) => (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 20px',
+        background: 'rgba(245,240,232,.02)',
+        border: '1px solid rgba(245,240,232,.06)',
+        borderRadius: 6,
+        gap: 16,
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, color: '#F5F0E8', letterSpacing: '.03em', marginBottom: 4 }}>
+          {label}
+        </p>
+        <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em' }}>
+          {description}
+        </p>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, color: 'rgba(245,240,232,.25)', letterSpacing: '.05em' }}>
+          {config[key] || '#C9A84C'}
+        </span>
+        <div style={{ position: 'relative' }}>
+          <input
+            type="color"
+            value={config[key] || '#C9A84C'}
+            onChange={(e) => updateConfig(key, e.target.value)}
+            style={{
+              width: 36,
+              height: 36,
+              border: '2px solid rgba(245,240,232,.1)',
+              borderRadius: 6,
+              cursor: 'pointer',
+              background: 'transparent',
+              padding: 2,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <PermissionGate permission="appearance.edit">
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px 40px' }}>
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
               <button
                 onClick={() => router.push('/dashboard/config')}
-                className="transition-colors duration-200"
-                style={{ color: 'rgba(245,240,232,.3)' }}
+                style={{ color: 'rgba(245,240,232,.3)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color .2s' }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.6)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,240,232,.3)')}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft style={{ width: 16, height: 16 }} />
               </button>
-              <h1
-                className="text-2xl sm:text-3xl font-light tracking-wide"
-                style={{ fontFamily: "'Cormorant Garamond', serif", color: '#F5F0E8' }}
-              >
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.75rem', fontWeight: 300, color: '#F5F0E8', letterSpacing: '.02em' }}>
                 Apariencia
               </h1>
             </div>
-            <p
-              className="text-sm ml-7"
-              style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.4)', letterSpacing: '.03em' }}
-            >
-              Selecciona el diseño visual de tu landing page
+            <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, color: 'rgba(245,240,232,.4)', letterSpacing: '.03em', marginLeft: 28 }}>
+              Personaliza el diseño y contenido de tu landing page
             </p>
           </div>
-          {saving && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm" style={{ background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.15)' }}>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: '#C9A84C' }} />
-              <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: '#C9A84C', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-                Guardando...
-              </span>
-            </div>
-          )}
-          {saved && !saving && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm" style={{ background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.15)' }}>
-              <Check className="w-3.5 h-3.5" style={{ color: '#22c55e' }} />
-              <span className="text-[10px]" style={{ fontFamily: "'Jost', sans-serif", color: '#22c55e', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-                Guardado
-              </span>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {saving && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.15)', borderRadius: 4 }}>
+                <Loader2 className="animate-spin" style={{ width: 12, height: 12, color: '#C9A84C' }} />
+                <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 10, color: '#C9A84C', letterSpacing: '.05em', textTransform: 'uppercase' }}>Guardando...</span>
+              </div>
+            )}
+            {saved && !saving && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.15)', borderRadius: 4 }}>
+                <Check style={{ width: 12, height: 12, color: '#22c55e' }} />
+                <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 10, color: '#22c55e', letterSpacing: '.05em', textTransform: 'uppercase' }}>Guardado</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Template Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {TEMPLATES.map((template) => {
-            const isActive = activeTemplate === template.id
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap', borderBottom: '1px solid rgba(245,240,232,.06)', paddingBottom: 16 }}>
+          {tabBtn('template', 'Template', Palette)}
+          {tabBtn('colors', 'Colores', Pipette)}
+          {tabBtn('branding', 'Logo e Imágenes', ImageIcon)}
+          {tabBtn('sections', 'Secciones', Eye)}
+        </div>
 
-            return (
-              <button
-                key={template.id}
-                onClick={() => handleSelectTemplate(template.id)}
-                disabled={saving}
-                className="text-left transition-all duration-300"
-                style={{
-                  background: isActive ? `${template.accent}08` : 'rgba(245,240,232,.02)',
-                  border: isActive ? `1px solid ${template.accent}40` : '1px solid rgba(245,240,232,.06)',
-                  borderRadius: '4px',
-                  padding: '24px',
-                  cursor: saving ? 'wait' : 'pointer',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(245,240,232,.04)'
-                    e.currentTarget.style.borderColor = `${template.accent}25`
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = `0 8px 30px -8px ${template.accent}12`
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(245,240,232,.02)'
-                    e.currentTarget.style.borderColor = 'rgba(245,240,232,.06)'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }
-                }}
-              >
-                {/* Active indicator */}
-                {isActive && (
-                  <div
-                    className="absolute top-0 right-0 px-3 py-1 flex items-center gap-1.5"
-                    style={{
-                      background: `${template.accent}18`,
-                      borderBottomLeftRadius: '4px',
-                      borderBottom: `1px solid ${template.accent}25`,
-                      borderLeft: `1px solid ${template.accent}25`,
-                    }}
-                  >
-                    <Check className="w-3 h-3" style={{ color: template.accent }} />
-                    <span
-                      className="text-[9px]"
-                      style={{ fontFamily: "'Jost', sans-serif", color: template.accent, letterSpacing: '.08em', textTransform: 'uppercase' }}
-                    >
-                      Activo
-                    </span>
+        {/* ═══════════ TAB: Template ═══════════ */}
+        {activeTab === 'template' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24 }}>
+            {TEMPLATES.map((template) => {
+              const isActive = config.template === template.id
+              return (
+                <button
+                  key={template.id}
+                  onClick={() => handleSelectTemplate(template.id)}
+                  disabled={saving}
+                  style={{
+                    textAlign: 'left',
+                    background: isActive ? `${template.accent}08` : 'rgba(245,240,232,.02)',
+                    border: isActive ? `1px solid ${template.accent}40` : '1px solid rgba(245,240,232,.06)',
+                    borderRadius: 6,
+                    padding: 24,
+                    cursor: saving ? 'wait' : 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all .3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'rgba(245,240,232,.04)'
+                      e.currentTarget.style.borderColor = `${template.accent}25`
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = `0 8px 30px -8px ${template.accent}12`
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'rgba(245,240,232,.02)'
+                      e.currentTarget.style.borderColor = 'rgba(245,240,232,.06)'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }
+                  }}
+                >
+                  {isActive && (
+                    <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: `${template.accent}18`, borderBottomLeftRadius: 4, borderBottom: `1px solid ${template.accent}25`, borderLeft: `1px solid ${template.accent}25`, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Check style={{ width: 12, height: 12, color: template.accent }} />
+                      <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 9, color: template.accent, letterSpacing: '.08em', textTransform: 'uppercase' }}>Activo</span>
+                    </div>
+                  )}
+                  <div style={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, background: `${template.accent}10`, border: `1px solid ${template.accent}20`, borderRadius: 6 }}>
+                    <Palette style={{ width: 20, height: 20, color: template.accent, strokeWidth: 1.5 }} />
                   </div>
-                )}
+                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1.125rem', color: '#F5F0E8', fontWeight: 400, letterSpacing: '.02em', marginBottom: 8 }}>
+                    {template.name}
+                  </h3>
+                  <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 12, color: 'rgba(245,240,232,.4)', letterSpacing: '.02em', lineHeight: 1.7, marginBottom: 20 }}>
+                    {template.description}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {template.preview.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'start', gap: 8, fontFamily: "'Jost', sans-serif", fontSize: 11, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em' }}>
+                        <span style={{ color: template.accent, marginTop: 1 }}>—</span>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
-                {/* Badge */}
-                {template.badge && !isActive && (
-                  <div
-                    className="absolute top-4 right-4 px-2 py-0.5"
+        {/* ═══════════ TAB: Colors ═══════════ */}
+        {activeTab === 'colors' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 600 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Info style={{ width: 14, height: 14, color: 'rgba(245,240,232,.25)', strokeWidth: 1.5 }} />
+              <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 12, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em' }}>
+                Los colores se aplican al Template JO Modern. Selecciona el template V2 para ver los cambios.
+              </p>
+            </div>
+            {colorField('Color primario', 'primary_color', 'Color principal del sitio (botones, acentos, CTAs)')}
+            {colorField('Color secundario', 'secondary_color', 'Color secundario para badges y elementos decorativos')}
+          </div>
+        )}
+
+        {/* ═══════════ TAB: Branding ═══════════ */}
+        {activeTab === 'branding' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 600 }}>
+            {/* Logo upload */}
+            <div style={{ padding: 24, background: 'rgba(245,240,232,.02)', border: '1px solid rgba(245,240,232,.06)', borderRadius: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, color: '#F5F0E8', letterSpacing: '.03em', marginBottom: 4 }}>
+                    Logo del sitio
+                  </p>
+                  <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em' }}>
+                    Se muestra en la barra de navegación y el footer (JPG, PNG, WebP, SVG — max 2MB)
+                  </p>
+                </div>
+              </div>
+
+              {/* Preview */}
+              {config.site_logo ? (
+                <div style={{ marginBottom: 16, padding: 20, background: '#0A0A0A', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <img
+                    src={config.site_logo}
+                    alt="Logo preview"
+                    style={{ maxHeight: 80, maxWidth: 200, objectFit: 'contain' }}
+                  />
+                  <button
+                    onClick={removeLogo}
                     style={{
-                      background: template.badge === 'Nuevo' ? 'rgba(96,165,250,.1)' : 'rgba(245,240,232,.05)',
-                      border: `1px solid ${template.badge === 'Nuevo' ? 'rgba(96,165,250,.2)' : 'rgba(245,240,232,.1)'}`,
-                      borderRadius: '2px',
+                      position: 'absolute', top: 8, right: 8, width: 24, height: 24,
+                      background: 'rgba(248,113,113,.15)', border: '1px solid rgba(248,113,113,.2)',
+                      borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', color: '#f87171',
                     }}
+                    title="Eliminar logo"
                   >
-                    <span
-                      className="text-[9px]"
+                    <X style={{ width: 12, height: 12 }} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ marginBottom: 16, padding: 32, background: '#0A0A0A', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(245,240,232,.08)' }}>
+                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: 'rgba(245,240,232,.15)' }}>JO</span>
+                </div>
+              )}
+
+              {/* Upload button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                onChange={handleUploadLogo}
+                style={{ display: 'none' }}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%', padding: '10px 16px',
+                  background: uploading ? 'rgba(201,168,76,.05)' : 'rgba(201,168,76,.08)',
+                  border: '1px solid rgba(201,168,76,.15)',
+                  borderRadius: 4, cursor: uploading ? 'wait' : 'pointer',
+                  fontFamily: "'Jost', sans-serif", fontSize: 12, color: '#C9A84C',
+                  letterSpacing: '.06em', textTransform: 'uppercase',
+                  transition: 'all .2s ease',
+                }}
+                onMouseEnter={(e) => { if (!uploading) e.currentTarget.style.background = 'rgba(201,168,76,.12)' }}
+                onMouseLeave={(e) => { if (!uploading) e.currentTarget.style.background = 'rgba(201,168,76,.08)' }}
+              >
+                {uploading ? (
+                  <Loader2 className="animate-spin" style={{ width: 14, height: 14 }} />
+                ) : (
+                  <Upload style={{ width: 14, height: 14, strokeWidth: 1.5 }} />
+                )}
+                {uploading ? 'Subiendo...' : (config.site_logo ? 'Cambiar logo' : 'Subir logo')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════ TAB: Sections ═══════════ */}
+        {activeTab === 'sections' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 600 }}>
+            {!isV2 ? (
+              <div style={{ padding: 20, background: 'rgba(245,240,232,.02)', border: '1px solid rgba(245,240,232,.06)', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Info style={{ width: 16, height: 16, color: 'rgba(245,240,232,.25)', strokeWidth: 1.5, flexShrink: 0 }} />
+                <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 12, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em', lineHeight: 1.6 }}>
+                  La gestión de secciones está disponible solo para el Template JO Modern. Selecciona el template V2 en la pestaña Template para activar esta opción.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: 4 }}>
+                  <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, color: '#F5F0E8', letterSpacing: '.03em', marginBottom: 4 }}>
+                    Secciones visibles
+                  </p>
+                  <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em' }}>
+                    Activa o desactiva secciones del template. Las secciones desactivadas no se muestran en la landing page.
+                  </p>
+                </div>
+
+                {V2_SECTIONS.map((section) => {
+                  const isOn = config[section.key] === 'true' || (config[section.key] === undefined && section.defaultOn)
+                  return (
+                    <div
+                      key={section.key}
                       style={{
-                        fontFamily: "'Jost', sans-serif",
-                        color: template.badge === 'Nuevo' ? '#60a5fa' : 'rgba(245,240,232,.3)',
-                        letterSpacing: '.08em',
-                        textTransform: 'uppercase',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '16px 20px',
+                        background: isOn ? 'rgba(201,168,76,.04)' : 'rgba(245,240,232,.02)',
+                        border: isOn ? '1px solid rgba(201,168,76,.12)' : '1px solid rgba(245,240,232,.06)',
+                        borderRadius: 6,
+                        transition: 'all .2s ease',
                       }}
                     >
-                      {template.badge}
-                    </span>
-                  </div>
-                )}
-
-                {/* Icon */}
-                <div
-                  className="w-12 h-12 flex items-center justify-center mb-5"
-                  style={{
-                    background: `${template.accent}10`,
-                    border: `1px solid ${template.accent}20`,
-                    borderRadius: '4px',
-                  }}
-                >
-                  <Palette className="w-5 h-5" style={{ color: template.accent, strokeWidth: 1.5 }} />
-                </div>
-
-                {/* Title */}
-                <h3
-                  className="text-lg mb-2"
-                  style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    color: '#F5F0E8',
-                    fontWeight: 400,
-                    letterSpacing: '.02em',
-                  }}
-                >
-                  {template.name}
-                </h3>
-
-                {/* Description */}
-                <p
-                  className="text-xs leading-relaxed mb-5"
-                  style={{
-                    fontFamily: "'Jost', sans-serif",
-                    color: 'rgba(245,240,232,.4)',
-                    letterSpacing: '.02em',
-                    lineHeight: '1.7',
-                  }}
-                >
-                  {template.description}
-                </p>
-
-                {/* Preview details */}
-                <div className="space-y-2">
-                  {template.preview.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-2 text-[11px]"
-                      style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', letterSpacing: '.02em' }}
-                    >
-                      <span style={{ color: template.accent, marginTop: '1px' }}>—</span>
-                      <span>{item}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {isOn ? (
+                          <Eye style={{ width: 16, height: 16, color: '#C9A84C', strokeWidth: 1.5 }} />
+                        ) : (
+                          <EyeOff style={{ width: 16, height: 16, color: 'rgba(245,240,232,.2)', strokeWidth: 1.5 }} />
+                        )}
+                        <div>
+                          <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, color: '#F5F0E8', letterSpacing: '.03em' }}>
+                            {section.label}
+                          </p>
+                          <p style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, color: 'rgba(245,240,232,.3)', letterSpacing: '.02em', marginTop: 2 }}>
+                            {section.description}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => updateConfig(section.key, isOn ? 'false' : 'true')}
+                        style={{
+                          width: 44, height: 24, borderRadius: 12, padding: 2,
+                          background: isOn ? '#C9A84C' : 'rgba(245,240,232,.1)',
+                          border: 'none', cursor: 'pointer',
+                          position: 'relative', transition: 'background .2s ease',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div style={{
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: isOn ? '#0A0A0A' : 'rgba(245,240,232,.4)',
+                          transition: 'transform .2s ease, background .2s ease',
+                          transform: isOn ? 'translateX(20px)' : 'translateX(0)',
+                        }} />
+                      </button>
                     </div>
-                  ))}
-                </div>
-
-                {/* CTA */}
-                <div
-                  className="mt-6 pt-4 flex items-center gap-2"
-                  style={{ borderTop: '1px solid rgba(245,240,232,.05)' }}
-                >
-                  {isActive ? (
-                    <span
-                      className="flex items-center gap-1.5 text-[10px]"
-                      style={{ fontFamily: "'Jost', sans-serif", color: template.accent, letterSpacing: '.08em', textTransform: 'uppercase' }}
-                    >
-                      <Monitor className="w-3 h-3" />
-                      Template en uso
-                    </span>
-                  ) : (
-                    <span
-                      className="flex items-center gap-1.5 text-[10px]"
-                      style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.3)', letterSpacing: '.08em', textTransform: 'uppercase' }}
-                    >
-                      <Globe className="w-3 h-3" />
-                      Click para activar
-                    </span>
-                  )}
-                </div>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Info note */}
-        <div
-          className="p-4 flex items-start gap-3"
-          style={{
-            background: 'rgba(245,240,232,.02)',
-            border: '1px solid rgba(245,240,232,.06)',
-            borderRadius: '4px',
-          }}
-        >
-          <RotateCcw className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(245,240,232,.25)', strokeWidth: 1.5 }} />
-          <div>
-            <p
-              className="text-[11px] leading-relaxed"
-              style={{ fontFamily: "'Jost', sans-serif", color: 'rgba(245,240,232,.35)', letterSpacing: '.02em' }}
-            >
-              El cambio de template se aplica inmediatamente en la landing page pública. Puedes volver al template anterior en cualquier momento seleccionándolo aquí.
-            </p>
+                  )
+                })}
+              </>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </PermissionGate>
   )

@@ -12,7 +12,7 @@ const INTEGRATIONS = [
   'Google',
 ] as const
 
-export default function V2TrustBar() {
+export default function V2TrustBar({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 

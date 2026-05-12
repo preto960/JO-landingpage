@@ -51,7 +51,7 @@ function renderCell(value: string): ReactNode {
   )
 }
 
-export default function V2Comparison() {
+export default function V2Comparison({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 

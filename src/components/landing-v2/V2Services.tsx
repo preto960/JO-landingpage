@@ -797,7 +797,7 @@ function ServiceRow({
 /* ═══════════════════════════════════════════
    V2Services — Main Export
    ═══════════════════════════════════════════ */
-export default function V2Services() {
+export default function V2Services({ primary = '#C9A84C' }: { primary?: string } = {}) {
   return (
     <section
       id="servicios"

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 const SESSION_KEY = 'jo-exit-intent-shown'
 
-export default function ExitIntent() {
+export default function ExitIntent({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const [isVisible, setIsVisible] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [isMobile, setIsMobile] = useState(false)

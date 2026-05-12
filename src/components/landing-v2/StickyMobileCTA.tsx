@@ -20,7 +20,7 @@ const css = `
 }
 `
 
-export default function StickyMobileCTA() {
+export default function StickyMobileCTA({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const [scrolledPastHero, setScrolledPastHero] = useState(false)
   const [show, setShow] = useState(false)
   const [hovered, setHovered] = useState(false)

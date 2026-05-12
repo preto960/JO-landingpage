@@ -45,7 +45,7 @@ const css = `
 }
 `
 
-export default function WhatsAppFloat() {
+export default function WhatsAppFloat({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const [visible, setVisible] = useState(false)
   const [hovered, setHovered] = useState(false)
 

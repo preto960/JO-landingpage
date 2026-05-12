@@ -45,7 +45,7 @@ const faqItems = [
   },
 ];
 
-export default function V2FAQ() {
+export default function V2FAQ({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);

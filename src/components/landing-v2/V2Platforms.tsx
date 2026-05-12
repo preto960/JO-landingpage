@@ -1212,7 +1212,7 @@ const integrations = [
 /* ═══════════════════════════════════════════
    V2Platforms — Main Export
    ═══════════════════════════════════════════ */
-export default function V2Platforms() {
+export default function V2Platforms({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const sectionRef = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
 

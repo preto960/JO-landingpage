@@ -138,7 +138,7 @@ const cssStyles = `
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function V2Testimonials() {
+export default function V2Testimonials({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const [currentPage, setCurrentPage] = useState(0);
   const [visibleCount, setVisibleCount] = useState(1);
   const [isVisible, setIsVisible] = useState(false);

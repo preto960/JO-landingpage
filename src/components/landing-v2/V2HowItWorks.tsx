@@ -234,7 +234,7 @@ function Step({
 /* ═══════════════════════════════════════════
    V2HowItWorks — Main Export
    ═══════════════════════════════════════════ */
-export default function V2HowItWorks() {
+export default function V2HowItWorks({ primary = '#C9A84C' }: { primary?: string } = {}) {
   const mobile = useIsMobile()
   const { setRef, visible } = useStaggeredVisible(steps.length)
 
