@@ -41,8 +41,45 @@ async function getGeoFromIp(ip: string): Promise<{ country?: string; city?: stri
   }
 }
 
+// Ensure the visitor_logs table exists
+let tableEnsured = false
+async function ensureTable() {
+  if (tableEnsured) return
+  try {
+    await db.visitorLog.count()
+    tableEnsured = true
+  } catch {
+    try {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "visitor_logs" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "ip_address" TEXT NOT NULL DEFAULT '',
+          "country" TEXT,
+          "city" TEXT,
+          "region" TEXT,
+          "browser" TEXT,
+          "os" TEXT,
+          "device" TEXT,
+          "page" TEXT NOT NULL DEFAULT '/',
+          "referer" TEXT,
+          "user_agent" TEXT,
+          "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS "visitor_logs_created_at_idx" ON "visitor_logs"("created_at");
+        CREATE INDEX IF NOT EXISTS "visitor_logs_country_idx" ON "visitor_logs"("country");
+        CREATE INDEX IF NOT EXISTS "visitor_logs_ip_address_idx" ON "visitor_logs"("ip_address");
+      `)
+      tableEnsured = true
+    } catch (err) {
+      console.error('[VisitorLog] Failed to create table:', err)
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    await ensureTable()
+
     const ip =
       request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ||
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||

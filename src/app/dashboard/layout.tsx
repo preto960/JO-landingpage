@@ -3,6 +3,39 @@ import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
 import DashboardShell from './DashboardShell'
 
+// Ensure the visitor_logs table exists (auto-create if missing)
+async function ensureVisitorLogsTable() {
+  try {
+    await db.visitorLog.count()
+  } catch {
+    // Table doesn't exist — create it with raw SQL
+    try {
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "visitor_logs" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "ip_address" TEXT NOT NULL DEFAULT '',
+          "country" TEXT,
+          "city" TEXT,
+          "region" TEXT,
+          "browser" TEXT,
+          "os" TEXT,
+          "device" TEXT,
+          "page" TEXT NOT NULL DEFAULT '/',
+          "referer" TEXT,
+          "user_agent" TEXT,
+          "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS "visitor_logs_created_at_idx" ON "visitor_logs"("created_at");
+        CREATE INDEX IF NOT EXISTS "visitor_logs_country_idx" ON "visitor_logs"("country");
+        CREATE INDEX IF NOT EXISTS "visitor_logs_ip_address_idx" ON "visitor_logs"("ip_address");
+      `)
+      console.log('[ensureVisitorLogsTable] Table created successfully')
+    } catch (err) {
+      console.error('[ensureVisitorLogsTable] Error creating table:', err)
+    }
+  }
+}
+
 // Ensure new permissions exist in DB (auto-migration)
 async function ensurePermissions() {
   try {
@@ -21,11 +54,13 @@ async function ensurePermissions() {
       // Auto-assign to admin roles
       const roles = await db.role.findMany({ where: { name: { in: ['super_admin', 'admin'] } } })
       for (const role of roles) {
-        await db.rolePermission.upsert({
-          where: { roleId_permissionId: { roleId: role.id, permissionId: created.id } },
-          update: {},
-          create: { roleId: role.id, permissionId: created.id },
-        })
+        try {
+          await db.rolePermission.create({
+            data: { roleId: role.id, permissionId: created.id },
+          })
+        } catch {
+          // Already exists — skip (unique constraint)
+        }
       }
     }
   } catch (err) {
@@ -44,8 +79,9 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // Auto-sync permissions in background (non-blocking)
+  // Auto-sync in background (non-blocking)
   ensurePermissions()
+  ensureVisitorLogsTable()
 
   return <DashboardShell user={session.user}>{children}</DashboardShell>
 }
