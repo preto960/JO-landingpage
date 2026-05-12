@@ -14,6 +14,10 @@ import V2Pricing from './V2Pricing'
 import V2FAQ from './V2FAQ'
 import V2CTA from './V2CTA'
 import V2Footer from './V2Footer'
+import WhatsAppFloat from './WhatsAppFloat'
+import StickyMobileCTA from './StickyMobileCTA'
+import SocialProofToast from './SocialProofToast'
+import ExitIntent from './ExitIntent'
 
 /**
  * V2 Presentation — Modern template
@@ -35,10 +39,13 @@ export default function V2Presentation() {
       <V2Pricing />
       <V2FAQ />
       <V2CTA />
-      {/* Phase 5 elements will be added here:
-          WhatsAppFloat, StickyMobileCTA, SocialProofToast, ExitIntent
-      */}
       <V2Footer />
+
+      {/* Floating conversion elements */}
+      <WhatsAppFloat />
+      <StickyMobileCTA />
+      <SocialProofToast />
+      <ExitIntent />
     </div>
   )
 }
